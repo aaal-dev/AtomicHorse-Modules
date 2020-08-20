@@ -2,14 +2,16 @@
 
 
 struct VCO_1 : Module {
-	enum ParamIds {
-		TUNEKNOB_PARAM,
-		PITCHKNOB_PARAM,
-		OCTAVEKNOB_PARAM,
-		PULSEWIDTHKNOB_PARAM,
-		FMKNOB_PARAM,
-		PWMKNOB_PARAM,
-		NUM_PARAMS
+  enum ParamIds {
+    TUNEKNOB_PARAM,
+    FREQKNOB_PARAM,
+    OCTAVEKNOB_PARAM,
+    PULSEWIDTHKNOB_PARAM,
+    FMKNOB_PARAM,
+    PWMKNOB_PARAM,
+    WAVETYPE_PARAM,
+    SYNCMODE_PARAM,
+    NUM_PARAMS
 	};
 	enum InputIds {
 		OCTAVEJACK_INPUT,
@@ -34,26 +36,33 @@ struct VCO_1 : Module {
 
 	float phase = 0.0;
 
-	VCO_1() {
-		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-		configParam(PITCHKNOB_PARAM, 0.f, 1.f, 0.5f, "Pitch");
-		configParam(TUNEKNOB_PARAM, -1.f, 1.f, 0.f, "Tune pitch");
-		configParam(OCTAVEKNOB_PARAM, -2.f, 2.f, 0.f, "Octave");
-		configParam(FMKNOB_PARAM, 0.f, 1.f, 0.f, "Pitch modulation", "%", 0.f, 100.f);
-		configParam(PULSEWIDTHKNOB_PARAM, 0.01f, 0.99f, 0.5f, "Pulse width", "%", 0.f, 100.f);
-		configParam(PWMKNOB_PARAM, 0.f, 1.f, 0.f, "Pulse width modulation", "%", 0.f, 100.f);
-	}
+  VCO_1() {
+    config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+    configParam(WAVETYPE_PARAM, 0.f, 1.f, 1.f, "Analog mode");
+    configParam(SYNCMODE_PARAM, 0.f, 1.f, 1.f, "Hard sync");
+    configParam(FREQKNOB_PARAM, -54.f, 54.f, 0.f, "Frequency", " Hz", dsp::FREQ_SEMITONE, dsp::FREQ_C4);
+    configParam(TUNEKNOB_PARAM, -1.f, 1.f, 0.f, "Tune pitch");
+    configParam(OCTAVEKNOB_PARAM, -3.f, 2.f, 0.f, "Octave", "'", 0.f, 1.f, 0.f);
+    configParam(FMKNOB_PARAM, 0.f, 1.f, 0.f, "Pitch modulation", "%", 0.f, 100.f);
+    configParam(PULSEWIDTHKNOB_PARAM, 0.01f, 0.99f, 0.5f, "Pulse width", "%", 0.f, 100.f);
+    configParam(PWMKNOB_PARAM, 0.f, 1.f, 0.f, "Pulse width modulation", "%", 0.f, 100.f);
+  }
 
-	void process(const ProcessArgs& args) override {
-		float pitch = params[PITCHKNOB_PARAM].getValue();
-		if (inputs[VOCTJACK_INPUT].isConnected()) {
-			  pitch += inputs[VOCTJACK_INPUT].getVoltage();
-		}
-			  pitch += params[TUNEKNOB_PARAM].getValue(); 
-		if (inputs[TUNEJACK_INPUT].isConnected()) {
-			  pitch += inputs[TUNEJACK_INPUT].getVoltage(); 
-		}
-		float freq = dsp::FREQ_C4 + pitch;
+  void process(const ProcessArgs& args) override {
+    float pitch = 1.f + std::round(params[OCTAVEKNOB_PARAM].getValue());
+    
+    pitch += params[TUNEKNOB_PARAM].getValue() / 12.f; 
+    if (inputs[TUNEJACK_INPUT].isConnected()) {
+      pitch += inputs[TUNEJACK_INPUT].getVoltage(); 
+    }
+    if (inputs[FMJACK_INPUT].isConnected()) {
+      pitch += (inputs[FMJACK_INPUT].getVoltage() / 4.f) * params[FMKNOB_PARAM].getValue();
+    }
+    if (inputs[VOCTJACK_INPUT].isConnected()) {
+      pitch += inputs[VOCTJACK_INPUT].getVoltage();
+    }
+    
+		float freq = params[FREQKNOB_PARAM].getValue(); //* std::pow(2.f, pitch);
 			  freq = clamp(freq, 0.f, 20000.f);
 		float deltaPhase = clamp(freq * args.sampleTime, 1e-6f, 0.5f);
 		float oldPhase = phase;
@@ -75,11 +84,14 @@ struct VCO_1Widget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(33.82, 14.013)), module, VCO_1::TUNEKNOB_PARAM));
-		addParam(createParamCentered<RoundHugeBlackKnob>(mm2px(Vec(20.032, 19.746)), module, VCO_1::PITCHKNOB_PARAM));
-		addParam(createParamCentered<RoundHugeBlackKnob>(mm2px(Vec(20.32, 49.976)), module, VCO_1::OCTAVEKNOB_PARAM));
+    addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+    
+    addParam(createParamCentered<CKSS>(mm2px(Vec(6.82, 19.746)), module, VCO_1::WAVETYPE_PARAM));
+    addParam(createParamCentered<CKSS>(mm2px(Vec(33.82, 66)), module, VCO_1::SYNCMODE_PARAM));
+    
+    addParam(createParamCentered<Trimpot>(mm2px(Vec(33.82, 14.013)), module, VCO_1::TUNEKNOB_PARAM));
+		addParam(createParamCentered<SynthTechAlco>(mm2px(Vec(20.032, 19.746)), module, VCO_1::FREQKNOB_PARAM));
+		addParam(createParamCentered<SynthTechAlco>(mm2px(Vec(20.32, 49.976)), module, VCO_1::OCTAVEKNOB_PARAM));
 		addParam(createParamCentered<RoundLargeBlackKnob>(mm2px(Vec(20.32, 83.827)), module, VCO_1::PULSEWIDTHKNOB_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(6.82, 85.966)), module, VCO_1::FMKNOB_PARAM));
 		addParam(createParamCentered<Trimpot>(mm2px(Vec(33.82, 85.966)), module, VCO_1::PWMKNOB_PARAM));

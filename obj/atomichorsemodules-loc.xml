@@ -1,34 +1,53 @@
 <?xml version="1.0"?>
 <Locations >
   <Project>
-    <vfs_file>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_file>
-    <file_marker column=" 16" line=" 1" >
-      <vfs_project>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
-      <vfs_file>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.cpp</vfs_file>
-    </file_marker>
-    <file_marker column=" 22" line=" 5" >
+    <vfs_file>/mnt/trash/src/gnat_workspace/vcv_rack_modules/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_file>
+    <file_marker column=" 1" line=" 1" >
       <vfs_project />
-      <vfs_file>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.hpp</vfs_file>
+      <vfs_file>/mnt/trash/src/gnat_workspace/vcv_rack_modules/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_file>
     </file_marker>
     <file_marker column=" 1" line=" 1" >
-      <vfs_project>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
-      <vfs_file>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.hpp</vfs_file>
+      <vfs_project>/mnt/trash/src/gnat_workspace/vcv_rack_modules/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
+      <vfs_file>/mnt/trash/src/gnat_workspace/vcv_rack_modules/Rack-SDK/AtomicHorseModules/src/vco-1.cpp</vfs_file>
     </file_marker>
-    <file_marker column=" 1" line=" 1" >
-      <vfs_project>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
-      <vfs_file>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.cpp</vfs_file>
-    </file_marker>
-    <file_marker column=" 1" line=" 1" >
-      <vfs_project>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
-      <vfs_file>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.hpp</vfs_file>
-    </file_marker>
-    <file_marker column=" 22" line=" 5" >
-      <vfs_project />
-      <vfs_file>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.hpp</vfs_file>
+    <file_marker column=" 46" line=" 94" >
+      <vfs_project>/mnt/trash/src/gnat_workspace/vcv_rack_modules/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
+      <vfs_file>/mnt/trash/src/gnat_workspace/vcv_rack_modules/Rack-SDK/AtomicHorseModules/src/vco-1.cpp</vfs_file>
     </file_marker>
     <file_marker current="true" column=" 1" line=" 1" >
-      <vfs_project>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
-      <vfs_file>/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/vco-1.cpp</vfs_file>
+      <vfs_project>/mnt/trash/src/gnat_workspace/vcv_rack_modules/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
+      <vfs_file>/mnt/trash/src/gnat_workspace/vcv_rack_modules/Rack-SDK/AtomicHorseModules/src/plugin.hpp</vfs_file>
+    </file_marker>
+  </Project>
+  <Project >
+    <vfs_file >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_file>
+    <file_marker column=" 16" line=" 1">
+      <vfs_project >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
+      <vfs_file >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.cpp</vfs_file>
+    </file_marker>
+    <file_marker column=" 22" line=" 5">
+      <vfs_project  />
+      <vfs_file >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.hpp</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 1">
+      <vfs_project >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
+      <vfs_file >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.hpp</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 1">
+      <vfs_project >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
+      <vfs_file >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.cpp</vfs_file>
+    </file_marker>
+    <file_marker column=" 1" line=" 1">
+      <vfs_project >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
+      <vfs_file >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.hpp</vfs_file>
+    </file_marker>
+    <file_marker column=" 22" line=" 5">
+      <vfs_project  />
+      <vfs_file >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/plugin.hpp</vfs_file>
+    </file_marker>
+    <file_marker current="true" column=" 1" line=" 1">
+      <vfs_project >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/atomichorsemodules.gpr</vfs_project>
+      <vfs_file >/home/arakinin/programs/Rack-SDK/AtomicHorseModules/src/vco-1.cpp</vfs_file>
     </file_marker>
   </Project>
 </Locations>
