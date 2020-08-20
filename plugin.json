@@ -1,9 +1,9 @@
 {
   "slug": "AtomicHorseModules",
   "name": "AtomicHorse Modules",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "license": "GPL-3.0-or-later",
-  "brand": "AHM",
+  "brand": "AtomicHorse Modules",
   "author": "AtomicHorse",
   "authorEmail": "",
   "authorUrl": "",
@@ -12,5 +12,14 @@
   "sourceUrl": "",
   "donateUrl": "",
   "changelogUrl": "",
-  "modules": []
+  "modules": [
+    {
+      "slug": "VCO-1",
+      "name": "VCO",
+      "description": "Voltage-control oscillator",
+      "tags": [
+        "VCO"
+      ]
+    }
+  ]
 }
