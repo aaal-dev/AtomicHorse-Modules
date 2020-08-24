@@ -10,6 +10,6 @@ I use some free fonts from [FontSpace](https://www.fontspace.com/commercial-font
 
 Sync switch is not working for now. I want do some research for begining.
 
-![VCO-1](/pics/vco-1.png "Second version of visual design")
+![VCO-1](/pics/vco-1.png "Third version of visual design") ![VCO-1](/pics/vco-1-v2.png "Second version of visual design")
 
 First take of VCO. I want some extra things in VCO, but can't find it on other. That's why I start this. I know that's all can be done with VCV Fundament collection of modules. But I want some narrowed panel for eye-pick look.  
