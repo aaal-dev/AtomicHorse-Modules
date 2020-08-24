@@ -1,6 +1,9 @@
 /build
+/dep
 /dist
+/obj
 /plugin.so
 /plugin.dylib
 /plugin.dll
 .DS_Store
+atomichorsemodules.gpr
