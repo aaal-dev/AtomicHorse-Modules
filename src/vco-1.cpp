@@ -303,8 +303,8 @@ struct VCO_1Widget : ModuleWidget {
 		addParam(createParamCentered<AHMRoundKnob2WhiteHuge>(mm2px(Vec(20.32, 23.0)), module, VCO_1::FREQKNOB_PARAM));
 		addParam(createParamCentered<AHMRotaryTumblerWhiteHugeSnap>(mm2px(Vec(20.32, 51.785)), module, VCO_1::OCTAVEKNOB_PARAM));
 		addParam(createParamCentered<AHMRoundKnobWhiteLarge>(mm2px(Vec(20.32, 75.525)), module, VCO_1::PULSEWIDTHKNOB_PARAM));
-		addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(6.82, 13.0)), module, VCO_1::FMKNOB_PARAM));
-		addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(6.82, 75.525)), module, VCO_1::PWMKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnob2WhiteTiny>(mm2px(Vec(6.82, 13.0)), module, VCO_1::FMKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnob3WhiteTiny>(mm2px(Vec(6.82, 75.525)), module, VCO_1::PWMKNOB_PARAM));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 51.785)), module, VCO_1::OCTAVEJACK_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 33.0)), module, VCO_1::TUNEJACK_INPUT));

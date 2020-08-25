@@ -8,8 +8,14 @@ extern Plugin* pluginInstance;
 
 // Declare each Model, defined in each module source file
 extern Model* modelVCO_1;
+extern Model* modelEnvelope_1;
 
 // Knobs
+
+struct AHMRoundKnobWhite : RoundKnob{
+	AHMRoundKnobWhite();
+};
+
 struct AHMRoundKnobWhiteHuge : RoundKnob{
 	AHMRoundKnobWhiteHuge();
 };
@@ -24,6 +30,14 @@ struct AHMRoundKnobWhiteLarge : RoundKnob{
 
 struct AHMRoundKnobWhiteTiny : RoundKnob{
 	AHMRoundKnobWhiteTiny();
+};
+
+struct AHMRoundKnob2WhiteTiny : RoundKnob{
+	AHMRoundKnob2WhiteTiny();
+};
+
+struct AHMRoundKnob3WhiteTiny : RoundKnob{
+	AHMRoundKnob3WhiteTiny();
 };
 
 struct AHMRotaryTumblerWhiteHugeSnap : RoundKnob{

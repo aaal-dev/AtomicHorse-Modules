@@ -9,7 +9,7 @@
   "authorUrl": "",
   "pluginUrl": "",
   "manualUrl": "",
-  "sourceUrl": "",
+  "sourceUrl": "https://github.com/animeslave/AtomicHorseModules",
   "donateUrl": "",
   "changelogUrl": "",
   "modules": [
@@ -18,7 +18,17 @@
       "name": "VCO",
       "description": "Voltage-control oscillator",
       "tags": [
-        "VCO"
+        "VCO",
+        "Polyphonic"
+      ]
+    },
+{
+      "slug": "Envelope-1",
+      "name": "Envelope",
+      "description": "Generates an envelope with Start/Attack/Hold/Decay/Sustain/Delay/Release",
+      "tags": [
+        "Envelope Generator",
+        "Polyphonic"
       ]
     }
   ]
