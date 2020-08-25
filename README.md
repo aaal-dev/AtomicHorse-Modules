@@ -7,9 +7,9 @@ I use some free fonts from [FontSpace](https://www.fontspace.com/commercial-font
 
 \- [Big Noodle Titling Font](https://www.fontspace.com/big-noodle-titling-font-f35093) by [Sentinel Type](https://www.fontspace.com/sentinel-type) in VCO-1
 
-VCO-1 | VCF
-|---|---|
-| ![VCO-1](/pics/vco-1.png "Third version of visual design") |  |
+VCO-1 | VCF | Envelope
+|---|---|---|
+| ![VCO-1](/pics/vco-1.png "Third version of visual design") | Not done yet | ![Envelope-1](/pics/envelope-1.png "Second version of visual design") |
 
 ## VCO-1
 
