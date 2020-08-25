@@ -248,7 +248,7 @@ struct VCO_1 : Module {
 
 			// Sinewave
 			if (outputs[SINEWAVEJACK_OUTPUT].isConnected()) {
-				simd::float_4 sinewave = sinewave(phase);
+				simd::float_4 sinewave = this->sinewave(phase);
 				sinewave += sinewaveMinBlep.process();
 				outputs[SINEWAVEJACK_OUTPUT].setChannels(channels);
 				outputs[SINEWAVEJACK_OUTPUT].setVoltageSimd(5.f*sinewave, channel);
@@ -256,7 +256,7 @@ struct VCO_1 : Module {
 
 			// Trianglewave
 			if (outputs[TRIANGLEWAVEJACK_OUTPUT].isConnected()) {
-				simd::float_4 trianglewave = trianglewave(phase);
+				simd::float_4 trianglewave = this->trianglewave(phase);
 				trianglewave += trianglewaveMinBlep.process();
 				outputs[TRIANGLEWAVEJACK_OUTPUT].setChannels(channels);
 				outputs[TRIANGLEWAVEJACK_OUTPUT].setVoltageSimd(5.f*trianglewave, channel);
@@ -264,7 +264,7 @@ struct VCO_1 : Module {
 
 			// Sawwave
 			if (outputs[SAWWAVEJACK_OUTPUT].isConnected()) {
-				simd::float_4 sawwave = sawwave(phase);
+				simd::float_4 sawwave = this->sawwave(phase);
 				sawwave += sawwaveMinBlep.process();
 				outputs[SAWWAVEJACK_OUTPUT].setChannels(channels);
 				outputs[SAWWAVEJACK_OUTPUT].setVoltageSimd(5.f*sawwave, channel);
@@ -272,7 +272,7 @@ struct VCO_1 : Module {
 
 			// Squarewave
 			if (outputs[SQUAREWAVEJACK_OUTPUT].isConnected()) {
-				simd::float_4 squarewave = squarewave(phase, pwParamValue);
+				simd::float_4 squarewave = this->squarewave(phase, pwParamValue);
 				squarewave += squarewaveMinBlep.process();
 				if (analogsignal) {
 					sqrFilter.setCutoffFreq(20.f * args.sampleTime);
