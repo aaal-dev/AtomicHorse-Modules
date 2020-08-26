@@ -9,6 +9,7 @@ struct Envelope_1 : Module {
 		STARTKNOB_PARAM,
 		ATTACKKNOB_PARAM,
 		ATTACKSLOPEKNOB_PARAM,
+		TARGETKNOB_PARAM,
 		HOLDKNOB_PARAM,
 		DECAYKNOB_PARAM,
 		DECAYSLOPEKNOB_PARAM,
@@ -21,6 +22,7 @@ struct Envelope_1 : Module {
 	enum InputIds {
 		STARTJACK_INPUT,
 		ATTACKJACK_INPUT,
+		TARGETJACK_INPUT,
 		HOLDJACK_INPUT,
 		DECAYJACK_INPUT,
 		SUSTAINJACK_INPUT,
@@ -39,19 +41,23 @@ struct Envelope_1 : Module {
 		ATTACKLED_LIGHT,
 		HOLDLED_LIGHT,
 		DECAYLED_LIGHT,
-		SUSTAINLED_LIGHT,
 		DELAYLED_LIGHT,
 		RELEASELED_LIGHT,
 		NUM_LIGHTS
 	};
 
+	simd::float_4 starting[4] = {simd::float_4::zero()};
 	simd::float_4 attacking[4] = {simd::float_4::zero()};
+	simd::float_4 holding[4] = {simd::float_4::zero()};
+	simd::float_4 decaing[4] = {simd::float_4::zero()};
+	simd::float_4 delaing[4] = {simd::float_4::zero()};
 	simd::float_4 env[4] = {0.f};
 	dsp::TSchmittTrigger<simd::float_4> trigger[4];
 	dsp::ClockDivider cvDivider;
 
 	simd::float_4 startValueLambda[4] = {0.f};
 	simd::float_4 attackValueLambda[4] = {0.f};
+	simd::float_4 targetValueLambda[4] = {0.f};
 	simd::float_4 holdValueLambda[4] = {0.f};
 	simd::float_4 decayValueLambda[4] = {0.f};
 	simd::float_4 sustainValueLambda[4] = {0.f};
@@ -62,14 +68,15 @@ struct Envelope_1 : Module {
 
 	Envelope_1() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-		configParam(STARTKNOB_PARAM, 0.f, 1.f, 0.5f, "Start", " ms", LAMBDA_BASE, MIN_TIME * 1000);
-		configParam(ATTACKKNOB_PARAM, 0.f, 1.f, 0.5f, "Attack", " ms", LAMBDA_BASE, MIN_TIME * 1000);
+		configParam(STARTKNOB_PARAM, 0.f, 1.f, 0.f, "Start", " ms", LAMBDA_BASE, MIN_TIME * 1000);
+		configParam(ATTACKKNOB_PARAM, 0.f, 1.f, 0.f, "Attack", " ms", LAMBDA_BASE, MIN_TIME * 1000);
 		configParam(ATTACKSLOPEKNOB_PARAM, 0.f, 1.f, 0.5f, "Attack slope", "", 0, 100);
-		configParam(HOLDKNOB_PARAM, 0.f, 1.f, 0.5f, "Hold", " ms", LAMBDA_BASE, MIN_TIME * 1000);
+		configParam(HOLDKNOB_PARAM, 0.f, 1.f, 0.f, "Hold", " ms", LAMBDA_BASE, MIN_TIME * 1000);
+		configParam(TARGETKNOB_PARAM, 0.f, 1.f, 1.f, "Target", "%", 0, 100);
 		configParam(DECAYKNOB_PARAM, 0.f, 1.f, 0.5f, "Decay", " ms", LAMBDA_BASE, MIN_TIME * 1000);
 		configParam(DECAYSLOPEKNOB_PARAM, 0.f, 1.f, 0.5f, "Decay slope", "", 0, 100);
 		configParam(SUSTAINKNOB_PARAM, 0.f, 1.f, 0.5f, "Sustain", "%", 0, 100);
-		configParam(DELAYKNOB_PARAM, 0.f, 1.f, 0.5f, "Decay", " ms", LAMBDA_BASE, MIN_TIME * 1000);
+		configParam(DELAYKNOB_PARAM, 0.f, 1.f, 0.f, "Delay", " ms", LAMBDA_BASE, MIN_TIME * 1000);
 		configParam(RELEASEKNOB_PARAM, 0.f, 1.f, 0.5f, "Release", " ms", LAMBDA_BASE, MIN_TIME * 1000);
 		configParam(RELEASESLOPEKNOB_PARAM, 0.f, 1.f, 0.5f, "Release slope", "", 0, 100);
 
@@ -88,15 +95,16 @@ struct Envelope_1 : Module {
 		if (cvDivider.process()) {
 			float startParamValue = params[STARTKNOB_PARAM].getValue();
 			float attackParamValue = params[ATTACKKNOB_PARAM].getValue();
+			float targetParamValue = params[TARGETKNOB_PARAM].getValue();
 			float holdParamValue = params[HOLDKNOB_PARAM].getValue();
 			float decayParamValue = params[DECAYKNOB_PARAM].getValue();
 			float sustainParamValue = params[SUSTAINKNOB_PARAM].getValue();
 			float delayParamValue = params[DELAYKNOB_PARAM].getValue();
 			float releaseParamValue = params[RELEASEKNOB_PARAM].getValue();
 
-			float attackSlopeParamValue = params[ATTACKSLOPEKNOB_PARAM].getValue();
-			float decaySlopeParamValue = params[DECAYSLOPEKNOB_PARAM].getValue();
-			float releaseSlopeParamValue = params[RELEASESLOPEKNOB_PARAM].getValue();
+			//float attackSlopeParamValue = params[ATTACKSLOPEKNOB_PARAM].getValue();
+			//float decaySlopeParamValue = params[DECAYSLOPEKNOB_PARAM].getValue();
+			//float releaseSlopeParamValue = params[RELEASESLOPEKNOB_PARAM].getValue();
 
 			for (int channel = 0; channel < channels; channel += 4) {
 				// Start
@@ -112,6 +120,13 @@ struct Envelope_1 : Module {
 					attackValue += inputs[ATTACKJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel) / 10.f;
 				attackValue = simd::clamp(attackValue, 0.f, 1.f);
 				attackValueLambda[channel / 4] = simd::pow(LAMBDA_BASE, -attackValue) / MIN_TIME;
+
+				// Target
+				simd::float_4 targetValue = targetParamValue;
+				if (inputs[TARGETJACK_INPUT].isConnected())
+					targetValue += inputs[TARGETJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel) / 10.f;
+				targetValue = simd::clamp(targetValue, 0.f, 1.f);
+				targetValueLambda[channel / 4] = simd::pow(LAMBDA_BASE, -targetValue) / MIN_TIME;
 
 				// Hold
 				simd::float_4 holdValue = holdParamValue;
@@ -152,30 +167,43 @@ struct Envelope_1 : Module {
 
 		simd::float_4 gate[4];
 
-		for (int c = 0; c < channels; c += 4) {
+		for (int channel = 0; channel < channels; channel += 4) {
 			// Gate
-			gate[c / 4] = inputs[GATEJACK_INPUT].getVoltageSimd<simd::float_4>(c) >= 1.f;
+			gate[channel / 4] = inputs[GATEJACK_INPUT].getVoltageSimd<simd::float_4>(channel) >= 1.f;
 
 			// Retrigger
-			simd::float_4 triggered = trigger[c / 4].process(inputs[TRIGJACK_INPUT].getPolyVoltageSimd<simd::float_4>(c));
-			attacking[c / 4] = simd::ifelse(triggered, simd::float_4::mask(), attacking[c / 4]);
+			simd::float_4 triggered = trigger[channel / 4].process(inputs[TRIGJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel));
+			starting[channel / 4] = simd::ifelse(triggered, simd::float_4::mask(), starting[channel / 4]);
+			attacking[channel / 4] = simd::ifelse(triggered, simd::float_4::mask(), attacking[channel / 4]);
 
-			// Get target and lambda for exponential decay
-			const float attackTarget = 1.2f;
-			simd::float_4 target = simd::ifelse(gate[c / 4], simd::ifelse(attacking[c / 4], attackTarget, sustainValueLambda[c / 4]), 0.f);
-			simd::float_4 lambda = simd::ifelse(gate[c / 4], simd::ifelse(attacking[c / 4], attackValueLambda[c / 4], decayValueLambda[c / 4]), releaseValueLambda[c / 4]);
+			// Get target ampletude and lambda for exponential decay
+			// const float attackTarget = 1.2f;
+			simd::float_4 target = simd::ifelse
+				(gate[channel / 4], simd::ifelse
+				(attacking[channel / 4], targetValueLambda[channel / 4],
+				 sustainValueLambda[channel / 4]), 0.f
+			);
+
+			simd::float_4 lambda = simd::ifelse
+				(gate[channel / 4], simd::ifelse
+				(starting[channel / 4], startValueLambda[channel / 4], simd::ifelse
+				 (attacking[channel / 4], attackValueLambda[channel / 4], simd::ifelse
+				  (holding[channel / 4], holdValueLambda[channel / 4], simd::ifelse
+				   (decaing[channel / 4], decayValueLambda[channel / 4], delayValueLambda[channel / 4])))),
+				releaseValueLambda[channel / 4]
+			);
 
 			// Adjust env
-			env[c / 4] += (target - env[c / 4]) * lambda * args.sampleTime;
+			env[channel / 4] += (target - env[channel / 4]) * lambda * args.sampleTime;
 
 			// Turn off attacking state if envelope is HIGH
-			attacking[c / 4] = simd::ifelse(env[c / 4] >= 1.f, simd::float_4::zero(), attacking[c / 4]);
+			attacking[channel / 4] = simd::ifelse(env[channel / 4] >= 1.f, simd::float_4::zero(), attacking[channel / 4]);
 
 			// Turn on attacking state if gate is LOW
-			attacking[c / 4] = simd::ifelse(gate[c / 4], attacking[c / 4], simd::float_4::mask());
+			attacking[channel / 4] = simd::ifelse(gate[channel / 4], attacking[channel / 4], simd::float_4::mask());
 
 			// Set output
-			outputs[ENVELOPEJACK_OUTPUT].setVoltageSimd(10.f * env[c / 4], c);
+			outputs[ENVELOPEJACK_OUTPUT].setVoltageSimd(10.f * env[channel / 4], channel);
 		}
 
 		outputs[ENVELOPEJACK_OUTPUT].setChannels(channels);
@@ -186,12 +214,11 @@ struct Envelope_1 : Module {
 			lights[ATTACKLED_LIGHT].setBrightness(0);
 			lights[HOLDLED_LIGHT].setBrightness(0);
 			lights[DECAYLED_LIGHT].setBrightness(0);
-			lights[SUSTAINLED_LIGHT].setBrightness(0);
 			lights[DELAYLED_LIGHT].setBrightness(0);
 			lights[RELEASELED_LIGHT].setBrightness(0);
 
 			for (int channel = 0; channel < channels; channel += 4) {
-				const float epsilon = 0.01f;
+				//const float epsilon = 0.01f;
 				//float_4 sustaining = (sustain[channel / 4] <= env[channel / 4]) & (env[channel / 4] < sustain[channel / 4] + epsilon);
 				//float_4 resting = (env[channel / 4] < epsilon);
 
@@ -199,7 +226,6 @@ struct Envelope_1 : Module {
 				simd::float_4 attacking;
 				simd::float_4 holding;
 				simd::float_4 decaing;
-				simd::float_4 sustaining;
 				simd::float_4 delaing;
 				simd::float_4 releasing;
 
@@ -211,8 +237,6 @@ struct Envelope_1 : Module {
 					lights[HOLDLED_LIGHT].setBrightness(1);
 				if (simd::movemask(gate[channel / 4] & decaing[channel / 4]))
 					lights[DECAYLED_LIGHT].setBrightness(1);
-				if (simd::movemask(gate[channel / 4] & sustaining[channel / 4]))
-					lights[SUSTAINLED_LIGHT].setBrightness(1);
 				if (simd::movemask(gate[channel / 4] & delaing[channel / 4]))
 					lights[DELAYLED_LIGHT].setBrightness(1);
 				if (simd::movemask(~gate[channel / 4] & releasing))
@@ -221,7 +245,6 @@ struct Envelope_1 : Module {
 		}
 	}
 };
-
 
 struct Envelope_1Widget : ModuleWidget {
 	Envelope_1Widget(Envelope_1* module) {
@@ -233,40 +256,40 @@ struct Envelope_1Widget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.923, 14)), module, Envelope_1::STARTKNOB_PARAM));
-		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.923, 28)), module, Envelope_1::ATTACKKNOB_PARAM));
-		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.923, 42)), module, Envelope_1::HOLDKNOB_PARAM));
-		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.923, 56)), module, Envelope_1::DECAYKNOB_PARAM));
-		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.923, 70)), module, Envelope_1::SUSTAINKNOB_PARAM));
-		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.923, 84)), module, Envelope_1::DELAYKNOB_PARAM));
-		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.923, 98)), module, Envelope_1::RELEASEKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 13.00)), module, Envelope_1::STARTKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 26.50)), module, Envelope_1::ATTACKKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(20.319, 40.00)), module, Envelope_1::TARGETKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 50.00)), module, Envelope_1::HOLDKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 63.50)), module, Envelope_1::DECAYKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(20.319, 77.00)), module, Envelope_1::SUSTAINKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 87.00)), module, Envelope_1::DELAYKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 100.5)), module, Envelope_1::RELEASEKNOB_PARAM));
 
-		addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(20.32, 28)), module, Envelope_1::ATTACKSLOPEKNOB_PARAM));
-		addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(20.32, 56)), module, Envelope_1::DECAYSLOPEKNOB_PARAM));
-		addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(20.32, 98)), module, Envelope_1::RELEASESLOPEKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(19.394, 26.50)), module, Envelope_1::ATTACKSLOPEKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(19.394, 63.50)), module, Envelope_1::DECAYSLOPEKNOB_PARAM));
+		addParam(createParamCentered<AHMRoundKnob4WhiteTiny>(mm2px(Vec(19.394, 100.5)), module, Envelope_1::RELEASESLOPEKNOB_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 14)), module, Envelope_1::STARTJACK_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 28)), module, Envelope_1::ATTACKJACK_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 42)), module, Envelope_1::HOLDJACK_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 56)), module, Envelope_1::DECAYJACK_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 70)), module, Envelope_1::SUSTAINJACK_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 84)), module, Envelope_1::DELAYJACK_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 98)), module, Envelope_1::RELEASEJACK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 13.00)), module, Envelope_1::STARTJACK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 26.50)), module, Envelope_1::ATTACKJACK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 40.00)), module, Envelope_1::TARGETJACK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 50.00)), module, Envelope_1::HOLDJACK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 63.50)), module, Envelope_1::DECAYJACK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 77.00)), module, Envelope_1::SUSTAINJACK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 87.00)), module, Envelope_1::DELAYJACK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 100.5)), module, Envelope_1::RELEASEJACK_INPUT));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 112.69)), module, Envelope_1::GATEJACK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.720, 112.69)), module, Envelope_1::GATEJACK_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20.32, 112.69)), module, Envelope_1::TRIGJACK_INPUT));
 
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.923, 112.69)), module, Envelope_1::ENVELOPEJACK_OUTPUT));
 
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(36.92, 9)), module, Envelope_1::STARTLED_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(36.92, 23)), module, Envelope_1::ATTACKLED_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(36.92, 37)), module, Envelope_1::HOLDLED_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(36.92, 51)), module, Envelope_1::DECAYLED_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(36.92, 65)), module, Envelope_1::SUSTAINLED_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(36.92, 79)), module, Envelope_1::DELAYLED_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(36.92, 93)), module, Envelope_1::RELEASELED_LIGHT));
+		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 13.00)), module, Envelope_1::STARTLED_LIGHT));
+		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 26.50)), module, Envelope_1::ATTACKLED_LIGHT));
+		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 50.00)), module, Envelope_1::HOLDLED_LIGHT));
+		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 63.50)), module, Envelope_1::DECAYLED_LIGHT));
+		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 87.00)), module, Envelope_1::DELAYLED_LIGHT));
+		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 100.5)), module, Envelope_1::RELEASELED_LIGHT));
 	}
 };
-
 
 Model* modelEnvelope_1 = createModel<Envelope_1, Envelope_1Widget>("Envelope-1");

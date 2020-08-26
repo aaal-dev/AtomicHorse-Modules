@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   sodipodi:docname="AHMRoundKnob4WhiteTiny.svg"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   id="svg111794"
+   version="1.1"
+   viewBox="0 0 6.2990294 6.3003921"
+   height="6.3003922mm"
+   width="6.2990298mm">
+  <defs
+     id="defs111788" />
+  <sodipodi:namedview
+     inkscape:document-rotation="0"
+     inkscape:window-maximized="1"
+     inkscape:window-y="34"
+     inkscape:window-x="0"
+     inkscape:window-height="1018"
+     inkscape:window-width="1920"
+     fit-margin-bottom="0"
+     fit-margin-right="0"
+     fit-margin-left="0"
+     fit-margin-top="0"
+     showgrid="false"
+     inkscape:current-layer="layer1"
+     inkscape:document-units="mm"
+     inkscape:cy="11.732752"
+     inkscape:cx="9.1052866"
+     inkscape:zoom="31.678384"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     inkscape:object-paths="true"
+     inkscape:snap-intersection-paths="true"
+     inkscape:snap-object-midpoints="true"
+     inkscape:snap-smooth-nodes="true" />
+  <metadata
+     id="metadata111791">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-183.93691,-77.348595)"
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Layer 1">
+    <path
+       transform="matrix(0.26458333,0,0,0.26458333,183.93691,77.348595)"
+       d="M 11.773438 0 A 11.905512 11.905512 0 0 0 0 11.90625 A 11.905512 11.905512 0 0 0 11.90625 23.810547 A 11.905512 11.905512 0 0 0 23.810547 11.90625 A 11.905512 11.905512 0 0 0 11.90625 0 A 11.905512 11.905512 0 0 0 11.773438 0 z M 11.828125 0.5703125 A 3.8130183 3.8130183 0 0 1 11.90625 0.5703125 A 3.8130183 3.8130183 0 0 1 15.71875 4.3828125 A 3.8130183 3.8130183 0 0 1 11.90625 8.1953125 A 3.8130183 3.8130183 0 0 1 8.0917969 4.3828125 A 3.8130183 3.8130183 0 0 1 11.828125 0.5703125 z "
+       style="fill:#e3e2db;stroke:none;stroke-width:10.9569;stroke-linecap:round;stroke-linejoin:round"
+       id="path832" />
+  </g>
+</svg>

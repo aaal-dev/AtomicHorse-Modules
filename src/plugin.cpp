@@ -63,6 +63,14 @@ AHMRoundKnob3WhiteTiny::AHMRoundKnob3WhiteTiny() {
 	maxAngle = 0.8 * M_PI;
 }
 
+AHMRoundKnob4WhiteTiny::AHMRoundKnob4WhiteTiny() {
+	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/AHMRoundKnob4WhiteTiny.svg")));
+	shadow->box.pos = Vec(0.0, 2.5);
+	minAngle = -0.5 * M_PI;
+	maxAngle = 0.5 * M_PI;
+}
+
+
 AHMRotaryTumblerWhiteHugeSnap::AHMRotaryTumblerWhiteHugeSnap() {
 	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/AHMRotaryTumblerWhiteHuge.svg")));
 	minAngle = -0.3 * M_PI;
