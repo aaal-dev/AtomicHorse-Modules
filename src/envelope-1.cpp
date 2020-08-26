@@ -45,26 +45,34 @@ struct Envelope_1 : Module {
 		RELEASELED_LIGHT,
 		NUM_LIGHTS
 	};
+	enum StagesIds {
+		STOP_STAGE,
+		START_STAGE,
+		ATTACK_STAGE,
+		HOLD_STAGE,
+		DECAY_STAGE,
+		DELAY_STAGE,
+		RELEASE_STAGE
+	};
 
-	simd::float_4 starting[4] = {simd::float_4::zero()};
-	simd::float_4 attacking[4] = {simd::float_4::zero()};
-	simd::float_4 holding[4] = {simd::float_4::zero()};
-	simd::float_4 decaing[4] = {simd::float_4::zero()};
-	simd::float_4 delaing[4] = {simd::float_4::zero()};
-	simd::float_4 env[4] = {0.f};
-	dsp::TSchmittTrigger<simd::float_4> trigger[4];
+	float env = 0.f;
+	float stagetime = 0.f;
+	dsp::TSchmittTrigger< float > trigger;
 	dsp::ClockDivider cvDivider;
 
-	simd::float_4 startValueLambda[4] = {0.f};
-	simd::float_4 attackValueLambda[4] = {0.f};
-	simd::float_4 targetValueLambda[4] = {0.f};
-	simd::float_4 holdValueLambda[4] = {0.f};
-	simd::float_4 decayValueLambda[4] = {0.f};
-	simd::float_4 sustainValueLambda[4] = {0.f};
-	simd::float_4 delayValueLambda[4] = {0.f};
-	simd::float_4 releaseValueLambda[4] = {0.f};
+	float startValueLambda = 0.f;
+	float attackValueLambda = 0.f;
+	float targetValueLambda = 0.f;
+	float holdValueLambda = 0.f;
+	float decayValueLambda = 0.f;
+	float sustainValueLambda = 0.f;
+	float delayValueLambda = 0.f;
+	float releaseValueLambda = 0.f;
 
 	dsp::ClockDivider lightDivider;
+
+	int stage = STOP_STAGE;
+
 
 	Envelope_1() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -106,104 +114,141 @@ struct Envelope_1 : Module {
 			//float decaySlopeParamValue = params[DECAYSLOPEKNOB_PARAM].getValue();
 			//float releaseSlopeParamValue = params[RELEASESLOPEKNOB_PARAM].getValue();
 
-			for (int channel = 0; channel < channels; channel += 4) {
+			for (int channel = 0; channel < channels; channel++) {
 				// Start
-				simd::float_4 startValue = startParamValue;
+				float startValue = startParamValue;
 				if (inputs[STARTJACK_INPUT].isConnected())
-					startValue += inputs[STARTJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel) / 10.f;
-				startValue = simd::clamp(startValue, 0.f, 1.f);
-				startValueLambda[channel / 4] = simd::pow(LAMBDA_BASE, -startValue) / MIN_TIME;
+					startValue += inputs[STARTJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				startValue = math::clamp(startValue, 0.f, 1.f);
+				startValueLambda = std::pow(LAMBDA_BASE, -startValue) / MIN_TIME;
 
 				// Attack
-				simd::float_4 attackValue = attackParamValue;
+				float attackValue = attackParamValue;
 				if (inputs[ATTACKJACK_INPUT].isConnected())
-					attackValue += inputs[ATTACKJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel) / 10.f;
-				attackValue = simd::clamp(attackValue, 0.f, 1.f);
-				attackValueLambda[channel / 4] = simd::pow(LAMBDA_BASE, -attackValue) / MIN_TIME;
+					attackValue += inputs[ATTACKJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				attackValue = math::clamp(attackValue, 0.f, 1.f);
+				attackValueLambda = std::pow(LAMBDA_BASE, -attackValue) / MIN_TIME;
 
 				// Target
-				simd::float_4 targetValue = targetParamValue;
+				float targetValue = targetParamValue;
 				if (inputs[TARGETJACK_INPUT].isConnected())
-					targetValue += inputs[TARGETJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel) / 10.f;
-				targetValue = simd::clamp(targetValue, 0.f, 1.f);
-				targetValueLambda[channel / 4] = simd::pow(LAMBDA_BASE, -targetValue) / MIN_TIME;
+					targetValue += inputs[TARGETJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				targetValue = math::clamp(targetValue, 0.f, 1.f);
+				targetValueLambda = std::pow(LAMBDA_BASE, -targetValue) / MIN_TIME;
 
 				// Hold
-				simd::float_4 holdValue = holdParamValue;
+				float holdValue = holdParamValue;
 				if (inputs[HOLDJACK_INPUT].isConnected())
-					holdValue += inputs[HOLDJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel) / 10.f;
-				holdValue = simd::clamp(holdValue, 0.f, 1.f);
-				holdValueLambda[channel / 4] = simd::pow(LAMBDA_BASE, -holdValue) / MIN_TIME;
+					holdValue += inputs[HOLDJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				holdValue = math::clamp(holdValue, 0.f, 1.f);
+				holdValueLambda = std::pow(LAMBDA_BASE, -holdValue) / MIN_TIME;
 
 				// Decay
-				simd::float_4 decayValue = decayParamValue;
+				float decayValue = decayParamValue;
 				if (inputs[DECAYJACK_INPUT].isConnected())
-					decayValue += inputs[DECAYJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel) / 10.f;
-				decayValue = simd::clamp(decayValue, 0.f, 1.f);
-				decayValueLambda[channel / 4] = simd::pow(LAMBDA_BASE, -decayValue) / MIN_TIME;
+					decayValue += inputs[DECAYJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				decayValue = math::clamp(decayValue, 0.f, 1.f);
+				decayValueLambda = std::pow(LAMBDA_BASE, -decayValue) / MIN_TIME;
 
 				// Sustain
-				simd::float_4 sustainValue = sustainParamValue;
+				float sustainValue = sustainParamValue;
 				if (inputs[SUSTAINJACK_INPUT].isConnected())
-					sustainValue += inputs[SUSTAINJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel) / 10.f;
-				sustainValue = simd::clamp(sustainValue, 0.f, 1.f);
-				sustainValueLambda[channel / 4] = simd::pow(LAMBDA_BASE, -sustainValue) / MIN_TIME;
+					sustainValue += inputs[SUSTAINJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				sustainValue = math::clamp(sustainValue, 0.f, 1.f);
+				sustainValueLambda = std::pow(LAMBDA_BASE, -sustainValue) / MIN_TIME;
 
 				// Delay
-				simd::float_4 delayValue = delayParamValue;
+				float delayValue = delayParamValue;
 				if (inputs[DELAYJACK_INPUT].isConnected())
-					delayValue += inputs[DELAYJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel) / 10.f;
-				delayValue = simd::clamp(delayValue, 0.f, 1.f);
-				delayValueLambda[channel / 4] = simd::pow(LAMBDA_BASE, -delayValue) / MIN_TIME;
+					delayValue += inputs[DELAYJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				delayValue = math::clamp(delayValue, 0.f, 1.f);
+				delayValueLambda = std::pow(LAMBDA_BASE, -delayValue) / MIN_TIME;
 
 				// Release
-				simd::float_4 releaseValue = releaseParamValue;
+				float releaseValue = releaseParamValue;
 				if (inputs[RELEASEJACK_INPUT].isConnected())
-					releaseValue += inputs[RELEASEJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel) / 10.f;
-				releaseValue = simd::clamp(releaseValue, 0.f, 1.f);
-				releaseValueLambda[channel / 4] = simd::pow(LAMBDA_BASE, -releaseValue) / MIN_TIME;
+					releaseValue += inputs[RELEASEJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				releaseValue = math::clamp(releaseValue, 0.f, 1.f);
+				releaseValueLambda = std::pow(LAMBDA_BASE, -releaseValue) / MIN_TIME;
 			}
 		}
 
-		simd::float_4 gate[4];
+		float gate;
 
-		for (int channel = 0; channel < channels; channel += 4) {
+		for (int channel = 0; channel < channels; channel++) {
 			// Gate
-			gate[channel / 4] = inputs[GATEJACK_INPUT].getVoltageSimd<simd::float_4>(channel) >= 1.f;
+			gate = inputs[GATEJACK_INPUT].getVoltage(channel) >= 1.f;
 
 			// Retrigger
-			simd::float_4 triggered = trigger[channel / 4].process(inputs[TRIGJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel));
-			starting[channel / 4] = simd::ifelse(triggered, simd::float_4::mask(), starting[channel / 4]);
-			attacking[channel / 4] = simd::ifelse(triggered, simd::float_4::mask(), attacking[channel / 4]);
+			bool triggered = trigger.process(inputs[TRIGJACK_INPUT].getPolyVoltage(channel));
+			if (triggered) {
+				stagetime = 0.f;
+				stage = START_STAGE;
+			}
 
-			// Get target ampletude and lambda for exponential decay
-			// const float attackTarget = 1.2f;
-			simd::float_4 target = simd::ifelse
-				(gate[channel / 4], simd::ifelse
-				(attacking[channel / 4], targetValueLambda[channel / 4],
-				 sustainValueLambda[channel / 4]), 0.f
-			);
+			switch(stage) {
+				case STOP_STAGE: {
+						break;
+					}
+				case START_STAGE: {
+						stagetime += (startValueLambda - stagetime) * startValueLambda;
+						if (stagetime >= startValueLambda) {
+							stagetime = 0.f;
+							stage = ATTACK_STAGE;
+						}
+						break;
+					}
+				case ATTACK_STAGE: {
+						stagetime += (attackValueLambda - stagetime) * attackValueLambda;
+						env += (targetValueLambda - env) * attackValueLambda * args.sampleTime;
+						if (stagetime >= attackValueLambda) {
+							stagetime = 0.f;
+							stage = HOLD_STAGE;
+							}
+						break;
+					}
+				case HOLD_STAGE: {
+						stagetime += (holdValueLambda - stagetime) * holdValueLambda;
+						if (stagetime >= holdValueLambda) {
+							stagetime = 0.f;
+							stage = DECAY_STAGE;
+						}
+						break;
+					}
+				case DECAY_STAGE: {
+						stagetime += (decayValueLambda - stagetime) * decayValueLambda;
+						env += (sustainValueLambda - env) * decayValueLambda * args.sampleTime;
+						if (stagetime >= decayValueLambda) {
+							stagetime = 0.f;
+							stage = DELAY_STAGE;
+						}
+						break;
+					}
+				case DELAY_STAGE: {
+						stagetime += (delayValueLambda - stagetime) * delayValueLambda;
+						if (stagetime >= delayValueLambda) {
+							stagetime = 0.f;
+							stage = RELEASE_STAGE;
+						}
+						break;
+					}
+				case RELEASE_STAGE: {
+						stagetime += (releaseValueLambda - stagetime) * releaseValueLambda;
+						env += (0.f - env) * releaseValueLambda * args.sampleTime;
+						if (stagetime >= releaseValueLambda) {
+							stagetime = 0.f;
+							stage = STOP_STAGE;
+						}
+						break;
+					}
+				default: {
 
-			simd::float_4 lambda = simd::ifelse
-				(gate[channel / 4], simd::ifelse
-				(starting[channel / 4], startValueLambda[channel / 4], simd::ifelse
-				 (attacking[channel / 4], attackValueLambda[channel / 4], simd::ifelse
-				  (holding[channel / 4], holdValueLambda[channel / 4], simd::ifelse
-				   (decaing[channel / 4], decayValueLambda[channel / 4], delayValueLambda[channel / 4])))),
-				releaseValueLambda[channel / 4]
-			);
-
-			// Adjust env
-			env[channel / 4] += (target - env[channel / 4]) * lambda * args.sampleTime;
-
-			// Turn off attacking state if envelope is HIGH
-			attacking[channel / 4] = simd::ifelse(env[channel / 4] >= 1.f, simd::float_4::zero(), attacking[channel / 4]);
-
-			// Turn on attacking state if gate is LOW
-			attacking[channel / 4] = simd::ifelse(gate[channel / 4], attacking[channel / 4], simd::float_4::mask());
+						break;
+					}
+			}
 
 			// Set output
-			outputs[ENVELOPEJACK_OUTPUT].setVoltageSimd(10.f * env[channel / 4], channel);
+			outputs[ENVELOPEJACK_OUTPUT].setVoltage(10.f * env, channel);
 		}
 
 		outputs[ENVELOPEJACK_OUTPUT].setChannels(channels);
@@ -217,30 +262,34 @@ struct Envelope_1 : Module {
 			lights[DELAYLED_LIGHT].setBrightness(0);
 			lights[RELEASELED_LIGHT].setBrightness(0);
 
-			for (int channel = 0; channel < channels; channel += 4) {
-				//const float epsilon = 0.01f;
-				//float_4 sustaining = (sustain[channel / 4] <= env[channel / 4]) & (env[channel / 4] < sustain[channel / 4] + epsilon);
-				//float_4 resting = (env[channel / 4] < epsilon);
-
-				simd::float_4 starting;
-				simd::float_4 attacking;
-				simd::float_4 holding;
-				simd::float_4 decaing;
-				simd::float_4 delaing;
-				simd::float_4 releasing;
-
-				if (simd::movemask(gate[channel / 4] & starting[channel / 4]))
-					lights[STARTLED_LIGHT].setBrightness(1);
-				if (simd::movemask(gate[channel / 4] & attacking[channel / 4]))
-					lights[ATTACKLED_LIGHT].setBrightness(1);
-				if (simd::movemask(gate[channel / 4] & holding[channel / 4]))
-					lights[HOLDLED_LIGHT].setBrightness(1);
-				if (simd::movemask(gate[channel / 4] & decaing[channel / 4]))
-					lights[DECAYLED_LIGHT].setBrightness(1);
-				if (simd::movemask(gate[channel / 4] & delaing[channel / 4]))
-					lights[DELAYLED_LIGHT].setBrightness(1);
-				if (simd::movemask(~gate[channel / 4] & releasing))
-					lights[RELEASELED_LIGHT].setBrightness(1);
+			for (int channel = 0; channel < channels; channel++) {
+				switch(stage) {
+					case START_STAGE: {
+							lights[STARTLED_LIGHT].setBrightness(1);
+						break;
+					}
+					case ATTACK_STAGE: {
+							lights[ATTACKLED_LIGHT].setBrightness(1);
+						break;
+					}
+					case HOLD_STAGE: {
+							lights[HOLDLED_LIGHT].setBrightness(1);
+						break;
+					}
+					case DECAY_STAGE: {
+							lights[DECAYLED_LIGHT].setBrightness(1);
+						break;
+					}
+					case DELAY_STAGE: {
+							lights[DELAYLED_LIGHT].setBrightness(1);
+						break;
+					}
+					case RELEASE_STAGE: {
+							lights[RELEASELED_LIGHT].setBrightness(1);
+						break;
+					}
+					default: 	break;
+				}
 			}
 		}
 	}
@@ -283,12 +332,12 @@ struct Envelope_1Widget : ModuleWidget {
 
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.923, 112.69)), module, Envelope_1::ENVELOPEJACK_OUTPUT));
 
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 13.00)), module, Envelope_1::STARTLED_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 26.50)), module, Envelope_1::ATTACKLED_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 50.00)), module, Envelope_1::HOLDLED_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 63.50)), module, Envelope_1::DECAYLED_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 87.00)), module, Envelope_1::DELAYLED_LIGHT));
-		addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(38.1, 100.5)), module, Envelope_1::RELEASELED_LIGHT));
+		addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 13.00)), module, Envelope_1::STARTLED_LIGHT));
+		addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 26.50)), module, Envelope_1::ATTACKLED_LIGHT));
+		addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 50.00)), module, Envelope_1::HOLDLED_LIGHT));
+		addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 63.50)), module, Envelope_1::DECAYLED_LIGHT));
+		addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 87.00)), module, Envelope_1::DELAYLED_LIGHT));
+		addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 100.5)), module, Envelope_1::RELEASELED_LIGHT));
 	}
 };
 
