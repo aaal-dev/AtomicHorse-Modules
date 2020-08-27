@@ -53,3 +53,8 @@ struct VCOFreqKnobParamQuantity : ParamQuantity {
 	float getDisplayValue() override;
 	void setDisplayValue(float v) override;
 };
+
+struct EnvelopeKnobParamQuantity : ParamQuantity {
+	float getDisplayValue() override;
+	void setDisplayValue(float v) override;
+};

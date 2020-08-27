@@ -103,3 +103,33 @@ void VCOFreqKnobParamQuantity::setDisplayValue(float v) {
 	v -= offset();
 	setValue(v);
 }
+
+float EnvelopeKnobParamQuantity::getDisplayValue() {
+	float v = getValue();
+	if (!module) {
+		return v;
+	}
+	float vv = v * v;
+	vv *= .1f;
+	vv += displayOffset;
+	if (v < 0.0f) {
+		return -vv;
+	}
+	return vv;
+}
+
+void EnvelopeKnobParamQuantity::setDisplayValue(float displayValue) {
+	if (!module) {
+		return;
+	}
+	displayValue -= displayOffset;
+	float v = fabsf(displayValue) / 10.f;
+	v = powf(v, 0.5f);
+	if (displayValue < 0.0f) {
+		setValue(-v);
+	}
+	else {
+		setValue(v);
+	}
+}
+
