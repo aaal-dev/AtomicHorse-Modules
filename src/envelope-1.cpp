@@ -55,9 +55,11 @@ struct Envelope_1 : Module {
 		RELEASE_STAGE
 	};
 
-	float env = 0.f;
-	float stagetime = 0.f;
-	dsp::TSchmittTrigger< float > trigger;
+	float env[16] = {0.f};
+	float stagetime[16] = {0.f};
+	StagesIds stage[16] = {STOP_STAGE};
+	dsp::TSchmittTrigger<float> trigger[16];
+	dsp::TSchmittTrigger<float> gate[16];
 	dsp::ClockDivider cvDivider;
 
 	float startValueLambda = 0.f;
@@ -71,21 +73,18 @@ struct Envelope_1 : Module {
 
 	dsp::ClockDivider lightDivider;
 
-	int stage = STOP_STAGE;
-
-
 	Envelope_1() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-		configParam(STARTKNOB_PARAM, 0.f, 1.f, 0.f, "Start", " ms", LAMBDA_BASE, MIN_TIME * 1000);
-		configParam(ATTACKKNOB_PARAM, 0.f, 1.f, 0.f, "Attack", " ms", LAMBDA_BASE, MIN_TIME * 1000);
-		configParam(ATTACKSLOPEKNOB_PARAM, 0.f, 1.f, 0.5f, "Attack slope", "", 0, 100);
-		configParam(HOLDKNOB_PARAM, 0.f, 1.f, 0.f, "Hold", " ms", LAMBDA_BASE, MIN_TIME * 1000);
+		configParam(STARTKNOB_PARAM, 0.f, 10.f, 0.f, "Start", " ms", 0.f, 1000.f);
+		configParam(ATTACKKNOB_PARAM, 0.f, 1.f, 0.f, "Attack", " ms", 0.f, 10000.f);
+		configParam(ATTACKSLOPEKNOB_PARAM, 0.5f, 2.f, 1.f, "Attack slope", "", 0, 100);
+		configParam(HOLDKNOB_PARAM, 0.f, 1.f, 0.f, "Hold", " ms", 0.f, 10000.f);
 		configParam(TARGETKNOB_PARAM, 0.f, 1.f, 1.f, "Target", "%", 0, 100);
-		configParam(DECAYKNOB_PARAM, 0.f, 1.f, 0.5f, "Decay", " ms", LAMBDA_BASE, MIN_TIME * 1000);
+		configParam(DECAYKNOB_PARAM, 0.f, 1.f, 0.5f, "Decay", " ms", 0.f, 10000.f);
 		configParam(DECAYSLOPEKNOB_PARAM, 0.f, 1.f, 0.5f, "Decay slope", "", 0, 100);
 		configParam(SUSTAINKNOB_PARAM, 0.f, 1.f, 0.5f, "Sustain", "%", 0, 100);
-		configParam(DELAYKNOB_PARAM, 0.f, 1.f, 0.f, "Delay", " ms", LAMBDA_BASE, MIN_TIME * 1000);
-		configParam(RELEASEKNOB_PARAM, 0.f, 1.f, 0.5f, "Release", " ms", LAMBDA_BASE, MIN_TIME * 1000);
+		configParam(DELAYKNOB_PARAM, 0.f, 1.f, 0.f, "Delay", " ms", 0.f, 10000.f);
+		configParam(RELEASEKNOB_PARAM, 0.f, 1.f, 0.5f, "Release", " ms", 0.f, 10000.f);
 		configParam(RELEASESLOPEKNOB_PARAM, 0.f, 1.f, 0.5f, "Release slope", "", 0, 100);
 
 		cvDivider.setDivision(16);
@@ -99,156 +98,175 @@ struct Envelope_1 : Module {
 
 		int channels = inputs[GATEJACK_INPUT].getChannels();
 
+		float startParamValue = params[STARTKNOB_PARAM].getValue();
+		float attackParamValue = params[ATTACKKNOB_PARAM].getValue();
+		float targetParamValue = params[TARGETKNOB_PARAM].getValue();
+		float holdParamValue = params[HOLDKNOB_PARAM].getValue();
+		float decayParamValue = params[DECAYKNOB_PARAM].getValue();
+		float sustainParamValue = params[SUSTAINKNOB_PARAM].getValue();
+		float delayParamValue = params[DELAYKNOB_PARAM].getValue();
+		float releaseParamValue = params[RELEASEKNOB_PARAM].getValue();
+		float attackSlopeParamValue = params[ATTACKSLOPEKNOB_PARAM].getValue();
+		//float decaySlopeParamValue = params[DECAYSLOPEKNOB_PARAM].getValue();
+		//float releaseSlopeParamValue = params[RELEASESLOPEKNOB_PARAM].getValue();
+
 		// Compute lambdas
 		if (cvDivider.process()) {
-			float startParamValue = params[STARTKNOB_PARAM].getValue();
-			float attackParamValue = params[ATTACKKNOB_PARAM].getValue();
-			float targetParamValue = params[TARGETKNOB_PARAM].getValue();
-			float holdParamValue = params[HOLDKNOB_PARAM].getValue();
-			float decayParamValue = params[DECAYKNOB_PARAM].getValue();
-			float sustainParamValue = params[SUSTAINKNOB_PARAM].getValue();
-			float delayParamValue = params[DELAYKNOB_PARAM].getValue();
-			float releaseParamValue = params[RELEASEKNOB_PARAM].getValue();
 
-			//float attackSlopeParamValue = params[ATTACKSLOPEKNOB_PARAM].getValue();
-			//float decaySlopeParamValue = params[DECAYSLOPEKNOB_PARAM].getValue();
-			//float releaseSlopeParamValue = params[RELEASESLOPEKNOB_PARAM].getValue();
 
 			for (int channel = 0; channel < channels; channel++) {
 				// Start
-				float startValue = startParamValue;
 				if (inputs[STARTJACK_INPUT].isConnected())
-					startValue += inputs[STARTJACK_INPUT].getPolyVoltage(channel) / 10.f;
-				startValue = math::clamp(startValue, 0.f, 1.f);
-				startValueLambda = std::pow(LAMBDA_BASE, -startValue) / MIN_TIME;
+					startParamValue += inputs[STARTJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				//startParamValue = math::clamp(startParamValue, 0.f, 1.f);
+				startValueLambda = startParamValue;
+				//startValueLambda = std::pow(LAMBDA_BASE, -startValue) / MIN_TIME;
+				//startValueLambda = startParamValue * args.sampleTime;
 
 				// Attack
-				float attackValue = attackParamValue;
 				if (inputs[ATTACKJACK_INPUT].isConnected())
-					attackValue += inputs[ATTACKJACK_INPUT].getPolyVoltage(channel) / 10.f;
-				attackValue = math::clamp(attackValue, 0.f, 1.f);
-				attackValueLambda = std::pow(LAMBDA_BASE, -attackValue) / MIN_TIME;
+					attackParamValue += inputs[ATTACKJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				//attackParamValue = math::clamp(attackParamValue, 0.f, 1.f);
+				attackValueLambda = std::pow(attackParamValue, 2.0) * 10;
+				//attackValueLambda = std::pow(LAMBDA_BASE, -attackValue) / MIN_TIME;
+				//attackValueLambda = attackParamValue * args.sampleTime;
 
 				// Target
-				float targetValue = targetParamValue;
 				if (inputs[TARGETJACK_INPUT].isConnected())
-					targetValue += inputs[TARGETJACK_INPUT].getPolyVoltage(channel) / 10.f;
-				targetValue = math::clamp(targetValue, 0.f, 1.f);
-				targetValueLambda = std::pow(LAMBDA_BASE, -targetValue) / MIN_TIME;
+					targetParamValue += inputs[TARGETJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				//targetParamValue = math::clamp(targetParamValue, 0.f, 1.f);
+				targetValueLambda = std::pow(targetParamValue, 2.0);
+				//targetValueLambda = std::pow(LAMBDA_BASE, -targetValue) / MIN_TIME;
+				//targetValueLambda = targetParamValue * args.sampleTime;
 
 				// Hold
-				float holdValue = holdParamValue;
 				if (inputs[HOLDJACK_INPUT].isConnected())
-					holdValue += inputs[HOLDJACK_INPUT].getPolyVoltage(channel) / 10.f;
-				holdValue = math::clamp(holdValue, 0.f, 1.f);
-				holdValueLambda = std::pow(LAMBDA_BASE, -holdValue) / MIN_TIME;
+					holdParamValue += inputs[HOLDJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				//holdParamValue = math::clamp(holdParamValue, 0.f, 1.f);
+				holdValueLambda = std::pow(holdParamValue, 2.0) * 10;
+				//holdValueLambda = std::pow(LAMBDA_BASE, -holdValue) / MIN_TIME;
+				//holdValueLambda = holdParamValue * args.sampleTime;
 
 				// Decay
-				float decayValue = decayParamValue;
 				if (inputs[DECAYJACK_INPUT].isConnected())
-					decayValue += inputs[DECAYJACK_INPUT].getPolyVoltage(channel) / 10.f;
-				decayValue = math::clamp(decayValue, 0.f, 1.f);
-				decayValueLambda = std::pow(LAMBDA_BASE, -decayValue) / MIN_TIME;
+					decayParamValue += inputs[DECAYJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				decayParamValue = math::clamp(decayParamValue, 0.f, 1.f);
+				decayValueLambda = std::pow(decayParamValue, 2.0) * 10;
+				//decayValueLambda = std::pow(LAMBDA_BASE, -decayValue) / MIN_TIME;
+				//decayValueLambda = decayParamValue * args.sampleTime;
 
 				// Sustain
-				float sustainValue = sustainParamValue;
 				if (inputs[SUSTAINJACK_INPUT].isConnected())
-					sustainValue += inputs[SUSTAINJACK_INPUT].getPolyVoltage(channel) / 10.f;
-				sustainValue = math::clamp(sustainValue, 0.f, 1.f);
-				sustainValueLambda = std::pow(LAMBDA_BASE, -sustainValue) / MIN_TIME;
+					sustainParamValue += inputs[SUSTAINJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				sustainParamValue = math::clamp(sustainParamValue, 0.f, 1.f);
+				sustainValueLambda = std::pow(sustainParamValue, 2.0) * 10;
+				//sustainValueLambda = std::pow(LAMBDA_BASE, -sustainValue) / MIN_TIME;
+				//sustainValueLambda = sustainParamValue * args.sampleTime;
 
 				// Delay
-				float delayValue = delayParamValue;
 				if (inputs[DELAYJACK_INPUT].isConnected())
-					delayValue += inputs[DELAYJACK_INPUT].getPolyVoltage(channel) / 10.f;
-				delayValue = math::clamp(delayValue, 0.f, 1.f);
-				delayValueLambda = std::pow(LAMBDA_BASE, -delayValue) / MIN_TIME;
+					delayParamValue += inputs[DELAYJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				delayParamValue = math::clamp(delayParamValue, 0.f, 1.f);
+				delayValueLambda = std::pow(delayParamValue, 2.0) * 10;
+				//delayValueLambda = std::pow(LAMBDA_BASE, -delayValue) / MIN_TIME;
+				//delayValueLambda = delayParamValue * args.sampleTime;
 
 				// Release
-				float releaseValue = releaseParamValue;
 				if (inputs[RELEASEJACK_INPUT].isConnected())
-					releaseValue += inputs[RELEASEJACK_INPUT].getPolyVoltage(channel) / 10.f;
-				releaseValue = math::clamp(releaseValue, 0.f, 1.f);
-				releaseValueLambda = std::pow(LAMBDA_BASE, -releaseValue) / MIN_TIME;
+					releaseParamValue += inputs[RELEASEJACK_INPUT].getPolyVoltage(channel) / 10.f;
+				releaseParamValue = math::clamp(releaseParamValue, 0.f, 1.f);
+				releaseValueLambda = std::pow(releaseParamValue, 2.0) * 10;
+				//releaseValueLambda = std::pow(LAMBDA_BASE, -releaseValue) / MIN_TIME;
+				//releaseValueLambda = releaseParamValue * args.sampleTime;
 			}
 		}
 
-		float gate;
-
 		for (int channel = 0; channel < channels; channel++) {
 			// Gate
-			gate = inputs[GATEJACK_INPUT].getVoltage(channel) >= 1.f;
+			if (inputs[GATEJACK_INPUT].isConnected())
+				gate[channel].process(inputs[GATEJACK_INPUT].getPolyVoltage(channel));
 
 			// Retrigger
-			bool triggered = trigger.process(inputs[TRIGJACK_INPUT].getPolyVoltage(channel));
-			if (triggered) {
-				stagetime = 0.f;
-				stage = START_STAGE;
+			if (inputs[TRIGJACK_INPUT].isConnected())
+				trigger[channel].process(inputs[TRIGJACK_INPUT].getPolyVoltage(channel));
+
+			if (gate[channel].isHigh() && trigger[channel].isHigh()) {
+				stagetime[channel] = 0.f;
+				stage[channel] = START_STAGE;
+			} else if (!gate[channel].isHigh() && !(stage[channel] == STOP_STAGE) && !(stage[channel] == RELEASE_STAGE)) {
+				stagetime[channel] = 0.f;
+				stage[channel] = RELEASE_STAGE;
 			}
 
-			switch(stage) {
-				case STOP_STAGE: {
-						break;
-					}
+			switch(stage[channel]) {
 				case START_STAGE: {
-						stagetime += (startValueLambda - stagetime) * startValueLambda;
-						if (stagetime >= startValueLambda) {
-							stagetime = 0.f;
-							stage = ATTACK_STAGE;
+						stagetime[channel] += args.sampleTime;
+						if (stagetime[channel] >= startValueLambda) {
+							stagetime[channel] = 0.f;
+							stage[channel] = ATTACK_STAGE;
 						}
 						break;
 					}
 				case ATTACK_STAGE: {
-						stagetime += (attackValueLambda - stagetime) * attackValueLambda;
-						env += (targetValueLambda - env) * attackValueLambda * args.sampleTime;
-						if (stagetime >= attackValueLambda) {
-							stagetime = 0.f;
-							stage = HOLD_STAGE;
+						stagetime[channel] += args.sampleTime / attackValueLambda;
+						//env[channel] += (targetValueLambda - env[channel]) * args.sampleTime / attackValueLambda;
+						//env = stagetime + 1 / attackValueLambda;
+						env[channel] += (env[channel] - targetValueLambda) * args.sampleTime * attackValueLambda;
+						if (stagetime[channel] >= 1.f) {
+							stagetime[channel] = 0.f;
+							stage[channel] = HOLD_STAGE;
 							}
 						break;
 					}
 				case HOLD_STAGE: {
-						stagetime += (holdValueLambda - stagetime) * holdValueLambda;
-						if (stagetime >= holdValueLambda) {
-							stagetime = 0.f;
-							stage = DECAY_STAGE;
+						//stagetime += (holdValueLambda - stagetime) * holdValueLambda;
+						stagetime[channel] += args.sampleTime / holdValueLambda;
+						if (stagetime[channel] >= 1.f) {
+							stagetime[channel] = 0.f;
+							stage[channel] = DECAY_STAGE;
 						}
 						break;
 					}
 				case DECAY_STAGE: {
-						stagetime += (decayValueLambda - stagetime) * decayValueLambda;
-						env += (sustainValueLambda - env) * decayValueLambda * args.sampleTime;
-						if (stagetime >= decayValueLambda) {
-							stagetime = 0.f;
-							stage = DELAY_STAGE;
+						//stagetime += (decayValueLambda - stagetime) * decayValueLambda;
+						stagetime[channel] += args.sampleTime / decayValueLambda;
+						//env += (sustainValueLambda - env) * decayValueLambda * args.sampleTime;
+						//env += args.sampleTime / attackValueLambda;
+						if (stagetime[channel] >= 1.f) {
+							stagetime[channel] = 0.f;
+							stage[channel] = DELAY_STAGE;
 						}
 						break;
 					}
 				case DELAY_STAGE: {
-						stagetime += (delayValueLambda - stagetime) * delayValueLambda;
-						if (stagetime >= delayValueLambda) {
-							stagetime = 0.f;
-							stage = RELEASE_STAGE;
+						//stagetime += (delayValueLambda - stagetime) * delayValueLambda;
+						stagetime[channel] += args.sampleTime / delayValueLambda;
+						if (stagetime[channel] >= 1.f) {
+							stagetime[channel] = 0.f;
+							stage[channel] = RELEASE_STAGE;
 						}
 						break;
 					}
 				case RELEASE_STAGE: {
-						stagetime += (releaseValueLambda - stagetime) * releaseValueLambda;
-						env += (0.f - env) * releaseValueLambda * args.sampleTime;
-						if (stagetime >= releaseValueLambda) {
-							stagetime = 0.f;
-							stage = STOP_STAGE;
+						//stagetime += (releaseValueLambda - stagetime) * releaseValueLambda;
+						stagetime[channel] += args.sampleTime / releaseValueLambda;
+						//env += (0.f - env) * releaseValueLambda * args.sampleTime;
+						//env += attackValueLambda;
+						if (stagetime[channel] >= 1.f) {
+							stagetime[channel] = 0.f;
+							stage[channel] = STOP_STAGE;
 						}
 						break;
 					}
 				default: {
-
+						env[channel] = 0.f;
+						stagetime[channel] = 0.f;
 						break;
 					}
 			}
 
 			// Set output
-			outputs[ENVELOPEJACK_OUTPUT].setVoltage(10.f * env, channel);
+			outputs[ENVELOPEJACK_OUTPUT].setVoltage(10.f * env[channel], channel);
 		}
 
 		outputs[ENVELOPEJACK_OUTPUT].setChannels(channels);
@@ -263,7 +281,7 @@ struct Envelope_1 : Module {
 			lights[RELEASELED_LIGHT].setBrightness(0);
 
 			for (int channel = 0; channel < channels; channel++) {
-				switch(stage) {
+				switch(stage[channel]) {
 					case START_STAGE: {
 							lights[STARTLED_LIGHT].setBrightness(1);
 						break;
