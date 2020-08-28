@@ -48,13 +48,4 @@ struct AHMRotaryTumblerWhiteHugeSnap : RoundKnob{
 	AHMRotaryTumblerWhiteHugeSnap();
 };
 
-struct VCOFreqKnobParamQuantity : ParamQuantity {
-	virtual float offset();
-	float getDisplayValue() override;
-	void setDisplayValue(float v) override;
-};
 
-struct EnvelopeKnobParamQuantity : ParamQuantity {
-	float getDisplayValue() override;
-	void setDisplayValue(float v) override;
-};

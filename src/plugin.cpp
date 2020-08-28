@@ -79,57 +79,5 @@ AHMRotaryTumblerWhiteHugeSnap::AHMRotaryTumblerWhiteHugeSnap() {
 	shadow->opacity = 0.f;
 }
 
-float VCOFreqKnobParamQuantity::offset() {
-	return 0.0f;
-}
 
-float VCOFreqKnobParamQuantity::getDisplayValue() {
-	float v = getValue();
-	if (!module) {
-		return v;
-	}
-	v += offset();
-	v = powf(2.0f, v);
-	v *= dsp::FREQ_C4;
-	return v;
-}
-
-void VCOFreqKnobParamQuantity::setDisplayValue(float v) {
-	if (!module) {
-		return;
-	}
-	v /= dsp::FREQ_C4;
-	v = log2f(v);
-	v -= offset();
-	setValue(v);
-}
-
-float EnvelopeKnobParamQuantity::getDisplayValue() {
-	float v = getValue();
-	if (!module) {
-		return v;
-	}
-	float vv = v * v;
-	vv *= .1f;
-	vv += displayOffset;
-	if (v < 0.0f) {
-		return -vv;
-	}
-	return vv;
-}
-
-void EnvelopeKnobParamQuantity::setDisplayValue(float displayValue) {
-	if (!module) {
-		return;
-	}
-	displayValue -= displayOffset;
-	float v = fabsf(displayValue) / 10.f;
-	v = powf(v, 0.5f);
-	if (displayValue < 0.0f) {
-		setValue(-v);
-	}
-	else {
-		setValue(v);
-	}
-}
 
