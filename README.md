@@ -1,5 +1,4 @@
-# AtomicHorse Modules for [VCV Rack](https://github.com/VCVRack/)
-Version: 1.0.0
+# AtomicHorse Modules v1.0.0 for [VCV Rack](https://github.com/VCVRack/)
 
 Some C++ self-learning and fun time with some math. Do some design stuff. And maybe use it in future for music making with VCV Rack.
 
@@ -21,7 +20,9 @@ First take of VCO. I want some extra things in VCO, but can't find it on other. 
 
 First take of Envelope. Enhanced version of typical ADSR with start time, target level, old time and delay time. And I want emplement some slope controls of attack, decay and release. It is like DAHDSR, but I saw that sustain in most cases means level of signal, not a lenght. But sometimes lenght of sustain might be useful. That's why I put delay after decay as lenght of sustain. And prevent misunderstunding with start delay (like in Fl Studio) I named it just Start. 
 
-> Not working for now. Only skeleton for visual design experiments.
+I use rescale for knobs. I think it's more helpful. 
+
+> Now it is working. Polyphonic on 16 voices, but without simd. Can be slow with many voices. Need some clamps in code, and new visual design with numbers.
 
 
 
