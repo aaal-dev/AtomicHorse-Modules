@@ -294,3 +294,11 @@ void VCOFreqKnobParamQuantity::setDisplayValue(float v) {
 	v -= offset();
 	setValue(v);
 }
+
+AHMRotaryTumblerWhiteHugeSnap::AHMRotaryTumblerWhiteHugeSnap() {
+	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/AHMRotaryTumblerWhiteHuge.svg")));
+	minAngle = -0.3 * M_PI;
+    maxAngle = 0.3 * M_PI;
+	snap = true;
+	shadow->opacity = 0.f;
+}

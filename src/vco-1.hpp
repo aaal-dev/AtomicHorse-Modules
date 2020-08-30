@@ -74,3 +74,7 @@ struct VCOFreqKnobParamQuantity : ParamQuantity {
 	float getDisplayValue() override;
 	void setDisplayValue(float v) override;
 };
+
+struct AHMRotaryTumblerWhiteHugeSnap : RoundKnob{
+	AHMRotaryTumblerWhiteHugeSnap();
+};

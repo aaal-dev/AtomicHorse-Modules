@@ -44,8 +44,6 @@ struct AHMRoundKnob4WhiteTiny : RoundKnob{
 	AHMRoundKnob4WhiteTiny();
 };
 
-struct AHMRotaryTumblerWhiteHugeSnap : RoundKnob{
-	AHMRotaryTumblerWhiteHugeSnap();
-};
+
 
 

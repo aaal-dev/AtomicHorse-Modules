@@ -7,12 +7,12 @@ Envelope_1::Envelope_1() {
 	configParam<EnvelopeKnobParamQuantity>(HOLDKNOB_PARAM, 0.f, 1.f, 0.f, "Hold", " s");
 	configParam<EnvelopeKnobParamQuantity>(DECAYKNOB_PARAM, 0.f, 1.f, 0.2f, "Decay", " s");
 	configParam<EnvelopeKnobParamQuantity>(DELAYKNOB_PARAM, 0.f, 1.f, 0.5f, "Delay", " s");
-	configParam<EnvelopeKnobParamQuantity>(RELEASEKNOB_PARAM, 0.f, 1.f, 0.5f, "Release", " s");
+	configParam<EnvelopeKnobParamQuantity>(RELEASEKNOB_PARAM, 0.f, 1.f, 0.2f, "Release", " s");
 	//<EnvelopeKnobParamQuantity>
 
-	configParam(ATTACKSLOPEKNOB_PARAM, .1f, 3.f, 1.f, "Attack slope", "", 0, 100);
-	configParam(DECAYSLOPEKNOB_PARAM, .1f, 3.f, 1.f, "Decay slope", "", 0, 100);
-	configParam(RELEASESLOPEKNOB_PARAM, .1f, 3.f, 1.f, "Release slope", "", 0, 100);
+	configParam(ATTACKSLOPEKNOB_PARAM, .1f, 3.f, 1.55f, "Attack slope", "", 0, 100/3);
+	configParam(DECAYSLOPEKNOB_PARAM, .1f, 3.f, 1.55f, "Decay slope", "", 0, 100/3);
+	configParam(RELEASESLOPEKNOB_PARAM, .1f, 3.f, 1.55f, "Release slope", "", 0, 100/3);
 
 	configParam(TARGETKNOB_PARAM, 0.000f, 10.000f, 10.000f, "Target level", "%", 0, 10);
 	configParam(SUSTAINKNOB_PARAM, 0.f, 10.000f, 5.f, "Sustain level", "%", 0, 10);
@@ -22,7 +22,7 @@ Envelope_1::Envelope_1() {
 }
 
 // Quadratic rescale seconds with milliseconds
-float Envelope_1::rescale(float x) {
+float Envelope_1::rescaleBigKnobs(float x) {
 	if (x >= 0.f && x < 0.2f) x = math::rescale(x, 0.f, .2f, 0.f, .1f);
 	else if (x >= 0.2f && x < 0.5f) x = math::rescale(x, .2f, .5f, 0.1f, 1.f);
 	else if (x >= 0.5f && x < 0.8f) x = math::rescale(x, .5f, .8f, 1.f, 5.f);
@@ -30,6 +30,13 @@ float Envelope_1::rescale(float x) {
 
 	int xx = (int)(x * 1000);
 	x = xx * .001f;
+	return x;
+}
+
+float Envelope_1::rescaleTinyKnobs(float x) {
+	if (x >= .1f && x < 1.55f) x = math::rescale(x, .1f, 1.55f, .1f, 1.f);
+	else if (x >= 1.55f && x < 0.5f) x = math::rescale(x, 1.55f, 3.f, 1.f, 3.f);
+
 	return x;
 }
 
@@ -48,50 +55,62 @@ void Envelope_1::process(const ProcessArgs& args) {
 			startParamValue[channel] = params[STARTKNOB_PARAM].getValue();
 			if (inputs[STARTJACK_INPUT].isConnected())
 				startParamValue[channel] += inputs[STARTJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			startParamValue[channel] = rescale(startParamValue[channel]);
+			startParamValue[channel] = rescaleBigKnobs(startParamValue[channel]);
+			startParamValue[channel] = clamp(startParamValue[channel], 0.f, 10.f);
 
 			// Attack
 			attackParamValue[channel] = params[ATTACKKNOB_PARAM].getValue();
 			if (inputs[ATTACKJACK_INPUT].isConnected())
 				attackParamValue[channel] += inputs[ATTACKJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			attackParamValue[channel] = rescale(attackParamValue[channel]);
+			attackParamValue[channel] = rescaleBigKnobs(attackParamValue[channel]);
+			attackParamValue[channel] = clamp(attackParamValue[channel], 0.001f, 10.f);
 			attackSlopeParamValue[channel] = params[ATTACKSLOPEKNOB_PARAM].getValue();
+			attackSlopeParamValue[channel] = rescaleTinyKnobs(attackSlopeParamValue[channel]);
 
 			// Hold
 			holdParamValue[channel] = params[HOLDKNOB_PARAM].getValue();
 			if (inputs[HOLDJACK_INPUT].isConnected())
 				holdParamValue[channel] += inputs[HOLDJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			holdParamValue[channel] = rescale(holdParamValue[channel]);
+			holdParamValue[channel] = rescaleBigKnobs(holdParamValue[channel]);
+			holdParamValue[channel] = clamp(holdParamValue[channel], 0.f, 10.f);
 
 			// Target
 			targetParamValue[channel] = params[TARGETKNOB_PARAM].getValue();
 			if (inputs[TARGETJACK_INPUT].isConnected())
 				targetParamValue[channel] += inputs[TARGETJACK_INPUT].getPolyVoltage(channel) / 10.f;
+			targetParamValue[channel] = clamp(targetParamValue[channel], 0.f, 10.f);
 
 			// Decay
 			decayParamValue[channel] = params[DECAYKNOB_PARAM].getValue();
 			if (inputs[DECAYJACK_INPUT].isConnected())
 				decayParamValue[channel] += inputs[DECAYJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			decayParamValue[channel] = rescale(decayParamValue[channel]);
+			decayParamValue[channel] = rescaleBigKnobs(decayParamValue[channel]);
+			decayParamValue[channel] = clamp(decayParamValue[channel], 0.001f, 10.f);
 			decaySlopeParamValue[channel] = params[DECAYSLOPEKNOB_PARAM].getValue();
+			decaySlopeParamValue[channel] = rescaleTinyKnobs(decaySlopeParamValue[channel]);
 
 			// Sustain
 			sustainParamValue[channel] = params[SUSTAINKNOB_PARAM].getValue();
 			if (inputs[SUSTAINJACK_INPUT].isConnected())
 				sustainParamValue[channel] += inputs[SUSTAINJACK_INPUT].getPolyVoltage(channel) / 10.f;
+			sustainParamValue[channel] = clamp(sustainParamValue[channel], 0.f, 10.f);
 
 			// Delay
 			delayParamValue[channel] = params[DELAYKNOB_PARAM].getValue();
 			if (inputs[DELAYJACK_INPUT].isConnected())
 				delayParamValue[channel] += inputs[DELAYJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			delayParamValue[channel] = rescale(delayParamValue[channel]);
+			delayParamValue[channel] = rescaleBigKnobs(delayParamValue[channel]);
+			delayParamValue[channel] = clamp(delayParamValue[channel], 0.f, 10.f);
+
 
 			// Release
 			releaseParamValue[channel] = params[RELEASEKNOB_PARAM].getValue();
 			if (inputs[RELEASEJACK_INPUT].isConnected())
 				releaseParamValue[channel] += inputs[RELEASEJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			releaseParamValue[channel] = rescale(releaseParamValue[channel]);
+			releaseParamValue[channel] = rescaleBigKnobs(releaseParamValue[channel]);
+			releaseParamValue[channel] = clamp(releaseParamValue[channel], 0.001f, 10.f);
 			releaseSlopeParamValue[channel] = params[RELEASESLOPEKNOB_PARAM].getValue();
+			releaseSlopeParamValue[channel] = rescaleTinyKnobs(releaseSlopeParamValue[channel]);
 		}
 	}
 
@@ -114,6 +133,8 @@ void Envelope_1::process(const ProcessArgs& args) {
 
 		switch(stage[channel]) {
 			case STOP_STAGE:
+				env[channel] = 0.f;
+				stagetime[channel] = 0.f;
 				break;
 			case START_STAGE: {
 					stagetime[channel] += args.sampleTime;
@@ -166,11 +187,6 @@ void Envelope_1::process(const ProcessArgs& args) {
 						stagetime[channel] = 0.f;
 						stage[channel] = STOP_STAGE;
 					}
-					break;
-				}
-			default: {
-					env[channel] = 0.f;
-					stagetime[channel] = 0.f;
 					break;
 				}
 		}

@@ -79,7 +79,8 @@ struct Envelope_1 : Module {
 
 	Envelope_1();
 
-	float rescale(float x);
+	float rescaleBigKnobs(float x);
+	float rescaleTinyKnobs(float x);
 
 	void process(const ProcessArgs& args) override;
 

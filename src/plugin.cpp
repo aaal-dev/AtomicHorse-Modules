@@ -71,13 +71,7 @@ AHMRoundKnob4WhiteTiny::AHMRoundKnob4WhiteTiny() {
 }
 
 
-AHMRotaryTumblerWhiteHugeSnap::AHMRotaryTumblerWhiteHugeSnap() {
-	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/AHMRotaryTumblerWhiteHuge.svg")));
-	minAngle = -0.3 * M_PI;
-    maxAngle = 0.3 * M_PI;
-	snap = true;
-	shadow->opacity = 0.f;
-}
+
 
 
 
