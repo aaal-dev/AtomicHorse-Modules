@@ -9,6 +9,15 @@ struct MixerMainLevelKnob : RoundKnob{
 	MixerMainLevelKnob();
 };
 
+struct MixerVuMeter : LightWidget {
+	float size_x;
+	float size_y;
+	
+	
+	
+	MixerVuMeter();
+};
+
 struct Mixer_1 : Module {
 	enum ParamIds {
 		SLIDER_LEVEL1_PARAM,

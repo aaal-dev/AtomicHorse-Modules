@@ -13,6 +13,8 @@ LEDLightSliderFixed<TLightBase>::LEDLightSliderFixed() {
 	this->setHandleSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/LEDSliderHandle.svg")));
 }
 
+
+
 Mixer_1::Mixer_1() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	configParam(SLIDER_LEVEL1_PARAM, 0.f, 1.3f, 1.f, "Level of signal 1", "%", 0.f, 100.f);
