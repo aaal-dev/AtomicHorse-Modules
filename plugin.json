@@ -30,6 +30,15 @@
         "Envelope Generator",
         "Polyphonic"
       ]
+    },
+{
+      "slug": "LFO-1",
+      "name": "LFO",
+      "description": "Low-frequency oscillator",
+      "tags": [
+        "LFO",
+        "Polyphonic"
+      ]
     }
   ]
 }

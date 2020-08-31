@@ -9,6 +9,7 @@ extern Plugin* pluginInstance;
 // Declare each Model, defined in each module source file
 extern Model* modelVCO_1;
 extern Model* modelEnvelope_1;
+extern Model* modelLFO_1;
 
 // Knobs
 
@@ -44,6 +45,10 @@ struct AHMRoundKnob4WhiteTiny : RoundKnob{
 	AHMRoundKnob4WhiteTiny();
 };
 
+// Switches
 
+struct AHMCKSS : SvgSwitch{
+	AHMCKSS();
+};
 
 

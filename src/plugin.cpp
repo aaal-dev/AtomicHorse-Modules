@@ -8,6 +8,7 @@ void init(Plugin* p) {
 	pluginInstance = p;
 	p->addModel(modelVCO_1);
 	p->addModel(modelEnvelope_1);
+	p->addModel(modelLFO_1);
 
 	// Any other plugin initialization may go here.
 	// As an alternative, consider lazy-loading assets and lookup tables 
@@ -23,13 +24,6 @@ AHMRoundKnobWhite::AHMRoundKnobWhite() {
 
 AHMRoundKnobWhiteHuge::AHMRoundKnobWhiteHuge() {
 	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/AHMRoundKnobWhiteHuge.svg")));
-	shadow->box.pos = Vec(0.0, 2.5);
-	minAngle = -0.8 * M_PI;
-	maxAngle = 0.8 * M_PI;
-}
-
-AHMRoundKnob2WhiteHuge::AHMRoundKnob2WhiteHuge() {
-	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/AHMRoundKnob2WhiteHuge.svg")));
 	shadow->box.pos = Vec(0.0, 2.5);
 	minAngle = -0.8 * M_PI;
 	maxAngle = 0.8 * M_PI;
@@ -70,7 +64,10 @@ AHMRoundKnob4WhiteTiny::AHMRoundKnob4WhiteTiny() {
 	maxAngle = 0.5 * M_PI;
 }
 
-
+AHMCKSS::AHMCKSS() {
+	addFrame(APP->window->loadSvg(asset::system("res/components/AHMCKSS_0.svg")));
+	addFrame(APP->window->loadSvg(asset::system("res/components/AHMCKSS_1.svg")));
+}
 
 
 
