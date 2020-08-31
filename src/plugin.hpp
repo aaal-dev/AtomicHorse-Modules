@@ -10,6 +10,7 @@ extern Plugin* pluginInstance;
 extern Model* modelVCO_1;
 extern Model* modelEnvelope_1;
 extern Model* modelLFO_1;
+extern Model* modelMixer_1;
 
 // Knobs
 

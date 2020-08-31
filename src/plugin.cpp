@@ -9,6 +9,7 @@ void init(Plugin* p) {
 	p->addModel(modelVCO_1);
 	p->addModel(modelEnvelope_1);
 	p->addModel(modelLFO_1);
+	p->addModel(modelMixer_1);
 
 	// Any other plugin initialization may go here.
 	// As an alternative, consider lazy-loading assets and lookup tables 
