@@ -1,21 +1,11 @@
 #include "plugin.hpp"
 
-template <typename TLightBase = RedLight>
-struct LEDLightSliderFixed : LEDLightSlider<TLightBase> {
-	LEDLightSliderFixed();
-};
-
 struct MixerMainLevelKnob : RoundKnob{
 	MixerMainLevelKnob();
 };
 
-struct MixerVuMeter : LightWidget {
-	float size_x;
-	float size_y;
-	
-	
-	
-	MixerVuMeter();
+struct MixerLevel : SvgSlider {
+	MixerLevel();
 };
 
 struct Mixer_1 : Module {
@@ -71,4 +61,10 @@ struct Mixer_1 : Module {
 
 struct Mixer_1Widget : ModuleWidget {
 	Mixer_1Widget(Mixer_1* module);
+};
+
+struct MixerVuMeter : LightWidget {
+	Mixer_1* module;
+	MixerVuMeter();
+	void draw(const DrawArgs& args) override;
 };

@@ -8,12 +8,31 @@ MixerMainLevelKnob::MixerMainLevelKnob() {
 	maxAngle = 0.8 * M_PI;
 }
 
-template <typename TLightBase>
-LEDLightSliderFixed<TLightBase>::LEDLightSliderFixed() {
-	this->setHandleSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/LEDSliderHandle.svg")));
+MixerLevel::MixerLevel() {
+	setBackgroundSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/Mixer_SliderPot.svg")));
+	setHandleSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/Mixer_SliderHandle.svg")));
+	maxHandlePos = mm2px(Vec(-.5, 0));
+	minHandlePos = mm2px(Vec(-.5, 30));
+	//background->box.pos = margin;
+	//box.size = background->box.size.plus(margin.mult(2));
 }
 
+MixerVuMeter::MixerVuMeter() {
+	box.size = mm2px(Vec(1.5, 34));
+}
 
+void MixerVuMeter::draw(const DrawArgs& args) {
+	float y = module->params[Mixer_1::SLIDER_LEVEL1_PARAM].getValue();
+	nvgStrokeColor(args.vg, nvgRGBA(0xff, 0xff, 0xff, 0x10));
+	{
+		nvgBeginPath(args.vg);
+		nvgMoveTo(args.vg, box.pos.x, box.pos.y);
+		nvgLineTo(args.vg, box.pos.x, box.pos.y - box.size.y * y);
+		nvgClosePath(args.vg);
+	}
+	nvgStrokeWidth(args.vg, 3.f);
+	nvgStroke(args.vg);
+}
 
 Mixer_1::Mixer_1() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -39,10 +58,14 @@ Mixer_1Widget::Mixer_1Widget(Mixer_1* module) {
 	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-	addParam(createLightParamCentered<LEDLightSliderFixed<GreenLight>>(mm2px(Vec(6.820, 46.464)), module, Mixer_1::SLIDER_LEVEL1_PARAM, Mixer_1::LED_LEVEL1_LIGHT));
-	addParam(createLightParamCentered<LEDLightSliderFixed<GreenLight>>(mm2px(Vec(15.82, 46.464)), module, Mixer_1::SLIDER_LEVEL2_PARAM, Mixer_1::LED_LEVEL2_LIGHT));
-	addParam(createLightParamCentered<LEDLightSliderFixed<GreenLight>>(mm2px(Vec(24.82, 46.464)), module, Mixer_1::SLIDER_LEVEL3_PARAM, Mixer_1::LED_LEVEL3_LIGHT));
-	addParam(createLightParamCentered<LEDLightSliderFixed<GreenLight>>(mm2px(Vec(33.82, 46.464)), module, Mixer_1::SLIDER_LEVEL4_PARAM, Mixer_1::LED_LEVEL4_LIGHT));
+	MixerVuMeter* vuMeter1L = createWidget<MixerVuMeter>(mm2px(Vec(3.0, 46.464)));
+	vuMeter1L->module = module;
+	addChild(vuMeter1L);
+
+	addParam(createParamCentered<MixerLevel>(mm2px(Vec(6.820, 46.464)), module, Mixer_1::SLIDER_LEVEL1_PARAM));
+	addParam(createParamCentered<MixerLevel>(mm2px(Vec(15.82, 46.464)), module, Mixer_1::SLIDER_LEVEL2_PARAM));
+	addParam(createParamCentered<MixerLevel>(mm2px(Vec(24.82, 46.464)), module, Mixer_1::SLIDER_LEVEL3_PARAM));
+	addParam(createParamCentered<MixerLevel>(mm2px(Vec(33.82, 46.464)), module, Mixer_1::SLIDER_LEVEL4_PARAM));
 
 	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(6.820, 85.312)), module, Mixer_1::KNOB_PAN1_PARAM));
 	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(15.82, 85.312)), module, Mixer_1::KNOB_PAN2_PARAM));
