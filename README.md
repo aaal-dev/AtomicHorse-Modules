@@ -4,11 +4,11 @@ Some C++ self-learning and fun time with some math. Do some design stuff. And ma
 
 I use some free fonts from [FontSpace](https://www.fontspace.com/commercial-fonts):
 
-\- [Big Noodle Titling Font](https://www.fontspace.com/big-noodle-titling-font-f35093) by [Sentinel Type](https://www.fontspace.com/sentinel-type) in VCO-1, Envelope-1
+\- [Big Noodle Titling Font](https://www.fontspace.com/big-noodle-titling-font-f35093) by [Sentinel Type](https://www.fontspace.com/sentinel-type) in VCO-1, Envelope-1, LFO-1, Mixer-1
 
-VCO-1 | Envelope-1 | LFO-1 | VCF | Mixer
+VCO-1 | Envelope-1 | LFO-1 | Mixer | VCF
 |---|---|---|---|---|
-| ![VCO-1](/pics/vco-1.png "Third version of visual design") | ![Envelope-1](/pics/envelope-1.png "Third version of visual design") | ![LFO-1](/pics/lfo-1.png "Second version of visual design") | Not done yet | Not done yet |
+| ![VCO-1](/pics/vco-1.png "Third version of visual design") | ![Envelope-1](/pics/envelope-1.png "Third version of visual design") | ![LFO-1](/pics/lfo-1.png "Second version of visual design") | ![Mixer-1](/pics/mixer-1.png "First version of visual design") | Not done yet |
 
 ## VCO-1
 
@@ -30,4 +30,10 @@ First take of LFO. I want some extra controls. And I think it would be much bett
 
 > Not working. Only skeleton for visual design.  
 
+
+## Mixer-1
+
+First take of standart 4 track mixer. I made code flexible. Only need is big panel and change TRACKS_NUMBER in [mixer-1.hpp](https://github.com/animeslave/AtomicHorseModules/blob/master/src/mixer-1.hpp). Polyphonic, stereo.
+
+> Panning is not working yet. 
 
