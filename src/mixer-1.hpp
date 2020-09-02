@@ -1,13 +1,13 @@
 #include "plugin.hpp"
 
-#define CHANNELS_NUMBER 4
+#define TRACKS_NUMBER 4
 
 struct Mixer_1 : Module {
 	enum ParamIds {
 		ENUMS(SLIDER_LEVEL_PARAM, 4),
 		ENUMS(KNOB_PAN_PARAM, 4),
-		KNOB_CVMAIN_PARAM,
-		KNOB_LEVELMAIN_PARAM,
+		KNOB_MAINCV_PARAM,
+		KNOB_MAINLEVEL_PARAM,
 		NUM_PARAMS
 	};
 	enum InputIds {
@@ -15,12 +15,12 @@ struct Mixer_1 : Module {
 		ENUMS(JACK_IN_R_INPUT, 4),
 		ENUMS(JACK_CV_INPUT, 4), 
 		ENUMS(JACK_PAN_INPUT, 4), 
-		JACK_CVMAIN_INPUT, 
+		JACK_MAINCV_INPUT, 
 		NUM_INPUTS
 	};
 	enum OutputIds {
-		JACK_OUTMAIN_L_OUTPUT, 
-		JACK_OUTMAIN_R_OUTPUT,
+		JACK_MAIN_L_OUTPUT, 
+		JACK_MAIN_R_OUTPUT,
 		NUM_OUTPUTS
 	};
 	enum LightIds {
@@ -31,13 +31,9 @@ struct Mixer_1 : Module {
 		LED_LEVELMAIN_LIGHT,
 		NUM_LIGHTS
 	};
-	int channels_l[CHANNELS_NUMBER] = {0};
-	int channels_r[CHANNELS_NUMBER] = {0};
 	
-	float level_l_ParamValue[CHANNELS_NUMBER][16] = {0.f};
-	float level_r_ParamValue[CHANNELS_NUMBER][16] = {0.f};
-	float mix_l_ParamValue[16] = {0.f};
-	float mix_r_ParamValue[16] = {0.f};
+	float main_l_value[16] = {0.f};
+	float main_r_value[16] = {0.f};
 	
 	Mixer_1();
 	
