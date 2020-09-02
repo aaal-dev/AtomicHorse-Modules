@@ -1,44 +1,20 @@
 #include "plugin.hpp"
 
-struct MixerMainLevelKnob : RoundKnob{
-	MixerMainLevelKnob();
-};
-
-struct MixerLevel : SvgSlider {
-	MixerLevel();
-};
+#define CHANNELS_NUMBER 4
 
 struct Mixer_1 : Module {
 	enum ParamIds {
-		SLIDER_LEVEL1_PARAM,
-		SLIDER_LEVEL2_PARAM,
-		SLIDER_LEVEL3_PARAM,
-		SLIDER_LEVEL4_PARAM,
-		KNOB_PAN1_PARAM,
-		KNOB_PAN2_PARAM,
-		KNOB_PAN3_PARAM,
-		KNOB_PAN4_PARAM,
+		ENUMS(SLIDER_LEVEL_PARAM, 4),
+		ENUMS(KNOB_PAN_PARAM, 4),
 		KNOB_CVMAIN_PARAM,
 		KNOB_LEVELMAIN_PARAM,
 		NUM_PARAMS
 	};
 	enum InputIds {
-		JACK_IN1_L_INPUT, 
-		JACK_IN1_R_INPUT,
-		JACK_IN2_L_INPUT, 
-		JACK_IN2_R_INPUT,
-		JACK_IN3_L_INPUT, 
-		JACK_IN3_R_INPUT,
-		JACK_IN4_L_INPUT, 
-		JACK_IN4_R_INPUT,
-		JACK_CV1_INPUT, 
-		JACK_CV2_INPUT,
-		JACK_CV3_INPUT, 
-		JACK_CV4_INPUT,
-		JACK_PAN1_INPUT, 
-		JACK_PAN2_INPUT,
-		JACK_PAN3_INPUT, 
-		JACK_PAN4_INPUT,
+		ENUMS(JACK_IN_L_INPUT, 4), 
+		ENUMS(JACK_IN_R_INPUT, 4),
+		ENUMS(JACK_CV_INPUT, 4), 
+		ENUMS(JACK_PAN_INPUT, 4), 
 		JACK_CVMAIN_INPUT, 
 		NUM_INPUTS
 	};
@@ -55,12 +31,33 @@ struct Mixer_1 : Module {
 		LED_LEVELMAIN_LIGHT,
 		NUM_LIGHTS
 	};
+	int channels_l[CHANNELS_NUMBER] = {0};
+	int channels_r[CHANNELS_NUMBER] = {0};
+	
+	float level_l_ParamValue[CHANNELS_NUMBER][16] = {0.f};
+	float level_r_ParamValue[CHANNELS_NUMBER][16] = {0.f};
+	float mix_l_ParamValue[16] = {0.f};
+	float mix_r_ParamValue[16] = {0.f};
 	
 	Mixer_1();
+	
+	void process(const ProcessArgs& args) override;
 };
 
 struct Mixer_1Widget : ModuleWidget {
 	Mixer_1Widget(Mixer_1* module);
+};
+
+
+
+// Additional components 
+
+struct MixerMainLevelKnob : RoundKnob{
+	MixerMainLevelKnob();
+};
+
+struct MixerLevel : SvgSlider {
+	MixerLevel();
 };
 
 struct MixerVuMeter : LightWidget {
