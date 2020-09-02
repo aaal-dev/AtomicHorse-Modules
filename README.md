@@ -33,7 +33,7 @@ First take of LFO. I want some extra controls. And I think it would be much bett
 
 ## Mixer-1
 
-First take of standart 4 track mixer. I made code flexible. Only need is big panel and change TRACKS_NUMBER in [mixer-1.hpp](https://github.com/animeslave/AtomicHorseModules/blob/master/src/mixer-1.hpp). Polyphonic, stereo.
+First take of standart 4 track mixer. I made code flexible. Only need is big panel and change TRACKS_NUMBER in [mixer-1.hpp](https://github.com/animeslave/AtomicHorseModules/blob/master/src/mixer-1.hpp). It is polyphonic and stereo. I need change visual design. And I want VuMeters on tracks, but I don't know how to do them yet. 
 
-> Panning is not working yet. 
+> Working. Panning is not working yet. Beware of loud volume. Not tuned.
 
