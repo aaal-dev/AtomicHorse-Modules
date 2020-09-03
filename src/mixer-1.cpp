@@ -4,42 +4,47 @@
 Mixer_1::Mixer_1() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	for (int i = 0; i < TRACKS_NUMBER; i++) {
-		configParam(SLIDER_LEVEL_PARAM + i, 0.f, 1.3f, 1.f, "Level of signal " + std::to_string(i + 1), "%", 0.f, 100.f);
+		configParam(FADER_LEVEL_PARAM + i, 0.f, M_SQRT2, 1.f, "Level of signal " + std::to_string(i + 1), "%", 0.f, 100.f);
 		configParam(KNOB_PAN_PARAM + i, -1.f, 1.f, 0.f, "Panning of signal " + std::to_string(i + 1), "%", 0.f, 100.f);
 	}
-	configParam(KNOB_MAINLEVEL_PARAM, 0.f, 1.f, 0.5f, "Level of mixed signal", "%", 0.f, 100.f);
+	configParam(KNOB_MAINLEVEL_PARAM, 0.f, M_SQRT2, 1.f, "Level of mixed signal", "%", 0.f, 100.f);
 }
 
 void Mixer_1::process(const ProcessArgs& args) {
-	int maxVoices = 1;
+	int voices_needed = 1;
 
 	// Tracks
 	for (int i = 0; i < TRACKS_NUMBER; i++) {
-
+		float fader_level = params[FADER_LEVEL_PARAM + i].getValue();
+		float pan_level = params[KNOB_PAN_PARAM + i].getValue();
 
 		// Left channel
 		if (inputs[JACK_IN_L_INPUT + i].isConnected()) {
 			int voices = inputs[JACK_IN_L_INPUT + i].getChannels();
-			maxVoices = std::max(maxVoices, voices);
+			voices_needed = std::max(voices_needed, voices);
 			for (int voice = 0; voice < voices; voice++) {
-				float levelValue = inputs[JACK_IN_L_INPUT + i].getPolyVoltage(voice);
-				levelValue *= params[SLIDER_LEVEL_PARAM + i].getValue();
+				float input_level = inputs[JACK_IN_L_INPUT + i].getPolyVoltage(voice);
+				input_level *= std::pow(fader_level, 2.f);
+				if (pan_level > 0.f)
+					input_level *= 1.f - pan_level;
 				if (inputs[JACK_CV_INPUT + i].isConnected())
-					levelValue *= clamp(inputs[JACK_CV_INPUT + i].getPolyVoltage(voice) / 10.f, 0.f, 1.f);
-				main_l_value[voice] += levelValue;
+					input_level *= clamp(inputs[JACK_CV_INPUT + i].getPolyVoltage(voice) / 10.f, 0.f, 1.f);
+				main_l_value[voice] += input_level;
 			}
 		}
 
 		// Right channel
 		if (inputs[JACK_IN_R_INPUT + i].isConnected()) {
 			int voices = inputs[JACK_IN_R_INPUT + i].getChannels();
-			maxVoices = std::max(maxVoices, voices);
+			voices_needed = std::max(voices_needed, voices);
 			for (int voice = 0; voice < voices; voice++) {
-				float levelValue = inputs[JACK_IN_R_INPUT + i].getPolyVoltage(voice);
-				levelValue *= params[SLIDER_LEVEL_PARAM + i].getValue();
+				float input_level = inputs[JACK_IN_R_INPUT + i].getPolyVoltage(voice);
+				input_level *= std::pow(fader_level, 2.f);
+				if (pan_level < 0.f)
+					input_level *= 1.f + pan_level;
 				if (inputs[JACK_CV_INPUT + i].isConnected())
-					levelValue *= clamp(inputs[JACK_CV_INPUT + i].getPolyVoltage(voice) / 10.f, 0.f, 1.f);
-				main_r_value[voice] += levelValue;
+					input_level *= clamp(inputs[JACK_CV_INPUT + i].getPolyVoltage(voice) / 10.f, 0.f, 1.f);
+				main_r_value[voice] += input_level;
 			}
 		}
 	}
@@ -47,10 +52,9 @@ void Mixer_1::process(const ProcessArgs& args) {
 	// Main mix
 	float main_level_param = params[KNOB_MAINLEVEL_PARAM].getValue();
 	float main_cv_param = params[KNOB_MAINCV_PARAM].getValue();
-	outputs[JACK_MAIN_L_OUTPUT].setChannels(maxVoices);
-	outputs[JACK_MAIN_R_OUTPUT].setChannels(maxVoices);
 
-	for (int voice = 0; voice < maxVoices; voice++) {
+
+	for (int voice = 0; voice < voices_needed; voice++) {
 
 		// Left channel
 		if (outputs[JACK_MAIN_L_OUTPUT].isConnected()) {
@@ -73,6 +77,8 @@ void Mixer_1::process(const ProcessArgs& args) {
 			outputs[JACK_MAIN_R_OUTPUT].setVoltage(main_r_value[voice], voice);
 		}
 	}
+	outputs[JACK_MAIN_L_OUTPUT].setChannels(voices_needed);
+	outputs[JACK_MAIN_R_OUTPUT].setChannels(voices_needed);
 
 }
 
@@ -90,7 +96,7 @@ Mixer_1Widget::Mixer_1Widget(Mixer_1* module) {
 	//addChild(vuMeter1L);
 
 	for (int i = 0; i < TRACKS_NUMBER; i++) {
-		addParam(createParamCentered<MixerLevel>(mm2px(Vec(6.82 + 9 * i, 46.464)), module, Mixer_1::SLIDER_LEVEL_PARAM + i));
+		addParam(createParamCentered<MixerLevel>(mm2px(Vec(6.82 + 9 * i, 46.464)), module, Mixer_1::FADER_LEVEL_PARAM + i));
 		addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(6.82 + 9 * i, 85.312)), module, Mixer_1::KNOB_PAN_PARAM + i));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * i, 13.0)), module, Mixer_1::JACK_IN_L_INPUT + i));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * i, 22.0)), module, Mixer_1::JACK_IN_R_INPUT + i));
@@ -111,14 +117,14 @@ MixerMainLevelKnob::MixerMainLevelKnob() {
 	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/Mixer_MaimLevelKnob.svg")));
 	shadow->box.pos = Vec(0.0, 2.5);
 	minAngle = -0.5 * M_PI;
-	maxAngle = 0.8 * M_PI;
+	maxAngle = 0.941 * M_PI;
 }
 
 MixerLevel::MixerLevel() {
 	setBackgroundSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/Mixer_SliderPot.svg")));
 	setHandleSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/Mixer_SliderHandle.svg")));
-	maxHandlePos = mm2px(Vec(-.5, 0));
-	minHandlePos = mm2px(Vec(-.5, 30));
+	maxHandlePos = mm2px(Vec(1.25, 0));
+	minHandlePos = mm2px(Vec(1.25, 30));
 	//background->box.pos = margin;
 	//box.size = background->box.size.plus(margin.mult(2));
 }
@@ -128,7 +134,7 @@ MixerVuMeter::MixerVuMeter() {
 }
 
 void MixerVuMeter::draw(const DrawArgs& args) {
-	float y = module->params[Mixer_1::SLIDER_LEVEL_PARAM + 0].getValue();
+	float y = module->params[Mixer_1::FADER_LEVEL_PARAM + 0].getValue();
 	nvgStrokeColor(args.vg, nvgRGBA(0xff, 0xff, 0xff, 0x10));
 	{
 		nvgBeginPath(args.vg);

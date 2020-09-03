@@ -4,7 +4,7 @@
 
 struct Mixer_1 : Module {
 	enum ParamIds {
-		ENUMS(SLIDER_LEVEL_PARAM, TRACKS_NUMBER),
+		ENUMS(FADER_LEVEL_PARAM, TRACKS_NUMBER),
 		ENUMS(KNOB_PAN_PARAM, TRACKS_NUMBER),
 		KNOB_MAINCV_PARAM,
 		KNOB_MAINLEVEL_PARAM,
@@ -32,8 +32,8 @@ struct Mixer_1 : Module {
 		NUM_LIGHTS
 	};
 	
-	float main_l_value[16] = {0.f};
-	float main_r_value[16] = {0.f};
+	float main_l_value[16] = {};
+	float main_r_value[16] = {};
 	
 	Mixer_1();
 	
