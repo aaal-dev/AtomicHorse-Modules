@@ -6,7 +6,7 @@ I use some free fonts from [FontSpace](https://www.fontspace.com/commercial-font
 
 \- [Big Noodle Titling Font](https://www.fontspace.com/big-noodle-titling-font-f35093) by [Sentinel Type](https://www.fontspace.com/sentinel-type) in VCO-1, Envelope-1, LFO-1, Mixer-1
 
-[VCO-1](#vco-1) | [Envelope-1](envelope-1) | [LFO-1](lfo-1) | [Mixer-1](mixer-1) | VCF
+[VCO-1](#vco-1) | [Envelope-1](#envelope-1) | [LFO-1](#lfo-1) | [Mixer-1](#mixer-1) | VCF
 |---|---|---|---|---|
 | ![VCO-1](/pics/vco-1.png "Third version of visual design") | ![Envelope-1](/pics/envelope-1.png "Third version of visual design") | ![LFO-1](/pics/lfo-1.png "Second version of visual design") | ![Mixer-1](/pics/mixer-1.png "First version of visual design") | Not done yet |
 
@@ -33,7 +33,7 @@ First take of LFO. I want some extra controls. And I think it would be much bett
 
 ## Mixer-1
 
-First take of standart 4 track mixer. I want stereo mixer with behaviors like in Mixer from Fundamental Modules. I made code flexible. Only need is big panel and change TRACKS_NUMBER in [mixer-1.hpp](https://github.com/animeslave/AtomicHorseModules/blob/master/src/mixer-1.hpp). It is polyphonic and stereo with panning. I need change visual design. And I want VuMeters on tracks, but I don't know how to do them yet. 
+First take of standart 4 track mixer. I want stereo mixer with behaviors like in Mixer from Fundamental Modules. I made code flexible. Only need is big panel and change TRACKS_NUMBER in [mixer-1.hpp](src/mixer-1.hpp). It is polyphonic and stereo with panning. I need change visual design. And I want VuMeters on tracks, but I don't know how to do them yet. 
 
 **Working. Beware of loud volume. Not tuned yet.**
 
