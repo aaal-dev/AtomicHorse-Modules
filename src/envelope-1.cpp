@@ -2,24 +2,300 @@
 
 Envelope_1::Envelope_1() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-	configParam<EnvelopeKnobParamQuantity>(STARTKNOB_PARAM, 0.f, 1.f, 0.f, "Start", " s");
-	configParam<EnvelopeKnobParamQuantity>(ATTACKKNOB_PARAM, 0.f, 1.f, 0.2f, "Attack", " s");
-	configParam<EnvelopeKnobParamQuantity>(HOLDKNOB_PARAM, 0.f, 1.f, 0.f, "Hold", " s");
-	configParam<EnvelopeKnobParamQuantity>(DECAYKNOB_PARAM, 0.f, 1.f, 0.2f, "Decay", " s");
-	configParam<EnvelopeKnobParamQuantity>(DELAYKNOB_PARAM, 0.f, 1.f, 0.5f, "Delay", " s");
-	configParam<EnvelopeKnobParamQuantity>(RELEASEKNOB_PARAM, 0.f, 1.f, 0.2f, "Release", " s");
-	//<EnvelopeKnobParamQuantity>
+	configParam<EnvelopeKnobParamQuantity>(KNOB_START_PARAM, 0.f, 1.f, 0.f, "Start", " s");
+	configParam<EnvelopeKnobParamQuantity>(KNOB_ATTACK_PARAM, 0.f, 1.f, 0.2f, "Attack", " s");
+	configParam<EnvelopeKnobParamQuantity>(KNOB_HOLD_PARAM, 0.f, 1.f, 0.f, "Hold", " s");
+	configParam<EnvelopeKnobParamQuantity>(KNOB_DECAY_PARAM, 0.f, 1.f, 0.2f, "Decay", " s");
+	configParam<EnvelopeKnobParamQuantity>(KNOB_DELAY_PARAM, 0.f, 1.f, 0.5f, "Delay", " s");
+	configParam<EnvelopeKnobParamQuantity>(KNOB_RELEASE_PARAM, 0.f, 1.f, 0.2f, "Release", " s");
 
-	configParam(ATTACKSLOPEKNOB_PARAM, .1f, 3.f, 1.55f, "Attack slope", "", 0, 100/3);
-	configParam(DECAYSLOPEKNOB_PARAM, .1f, 3.f, 1.55f, "Decay slope", "", 0, 100/3);
-	configParam(RELEASESLOPEKNOB_PARAM, .1f, 3.f, 1.55f, "Release slope", "", 0, 100/3);
+	configParam(KNOB_ATTACKSLOPE_PARAM, .1f, 3.f, 1.55f, "Attack slope", "", 0, 100/3);
+	configParam(KNOB_DECAYSLOPE_PARAM, .1f, 3.f, 1.55f, "Decay slope", "", 0, 100/3);
+	configParam(KNOB_RELEASESLOPE_PARAM, .1f, 3.f, 1.55f, "Release slope", "", 0, 100/3);
 
-	configParam(TARGETKNOB_PARAM, 0.000f, 10.000f, 10.000f, "Target level", "%", 0, 10);
-	configParam(SUSTAINKNOB_PARAM, 0.f, 10.000f, 5.f, "Sustain level", "%", 0, 10);
-
-	cvDivider.setDivision(16);
-	lightDivider.setDivision(128);
+	configParam(KNOB_TARGET_PARAM, 0.000f, 10.000f, 10.000f, "Target level", "%", 0, 10);
+	configParam(KNOB_SUSTAIN_PARAM, 0.f, 10.000f, 5.f, "Sustain level", "%", 0, 10);
 }
+
+void Envelope_1::process(const ProcessArgs& args) {
+	if (inputs[JACK_GATE_INPUT].isConnected()) {
+		int voices = inputs[JACK_GATE_INPUT].getChannels();
+		outputs[JACK_ENVELOPE_OUTPUT].setChannels(voices);
+
+		float startled_brightness = 0.f;
+		float attackled_brightness = 0.f;
+		float holdled_brightness = 0.f;
+		float decayled_brightness = 0.f;
+		float delayled_brightness = 0.f;
+		float releaseled_brightness = 0.f;
+
+		lights[LED_START_LIGHT].setBrightness(0);
+		lights[LED_ATTACK_LIGHT].setBrightness(0);
+		lights[LED_HOLD_LIGHT].setBrightness(0);
+		lights[LED_DECAY_LIGHT].setBrightness(0);
+		lights[LED_DELAY_LIGHT].setBrightness(0);
+		lights[LED_RELEASE_LIGHT].setBrightness(0);
+
+		for (int voice = 0; voice < voices; voice++) {
+
+			// Start
+			start_stage_time[voice] = params[KNOB_START_PARAM].getValue();
+			if (inputs[JACK_START_INPUT].isConnected())
+				start_stage_time[voice] *= inputs[JACK_START_INPUT].getPolyVoltage(voice) / 10.f;
+			start_stage_time[voice] = rescaleBigKnobs(start_stage_time[voice]);
+			start_stage_time[voice] = clamp(start_stage_time[voice], 0.f, 10.f);
+
+			// Attack
+			attack_stage_time[voice] = params[KNOB_ATTACK_PARAM].getValue();
+			if (inputs[JACK_ATTACK_INPUT].isConnected())
+				attack_stage_time[voice] *= inputs[JACK_ATTACK_INPUT].getPolyVoltage(voice) / 10.f;
+			attack_stage_time[voice] = rescaleBigKnobs(attack_stage_time[voice]);
+			attack_stage_time[voice] = clamp(attack_stage_time[voice], 0.001f, 10.f);
+			attack_stage_slope[voice] = params[KNOB_ATTACKSLOPE_PARAM].getValue();
+			attack_stage_slope[voice] = rescaleTinyKnobs(attack_stage_slope[voice]);
+
+			// Hold
+			hold_stage_time[voice] = params[KNOB_HOLD_PARAM].getValue();
+			if (inputs[JACK_HOLD_INPUT].isConnected())
+				hold_stage_time[voice] += inputs[JACK_HOLD_INPUT].getPolyVoltage(voice) / 10.f;
+			hold_stage_time[voice] = rescaleBigKnobs(hold_stage_time[voice]);
+			hold_stage_time[voice] = clamp(hold_stage_time[voice], 0.f, 10.f);
+
+			// Target
+			target_level[voice] = params[KNOB_TARGET_PARAM].getValue();
+			if (inputs[JACK_TARGET_INPUT].isConnected())
+				target_level[voice] += inputs[JACK_TARGET_INPUT].getPolyVoltage(voice) / 10.f;
+			target_level[voice] = clamp(target_level[voice], 0.f, 10.f);
+
+			// Decay
+			decay_stage_time[voice] = params[KNOB_DECAY_PARAM].getValue();
+			if (inputs[JACK_DECAY_INPUT].isConnected())
+				decay_stage_time[voice] += inputs[JACK_DECAY_INPUT].getPolyVoltage(voice) / 10.f;
+			decay_stage_time[voice] = rescaleBigKnobs(decay_stage_time[voice]);
+			decay_stage_time[voice] = clamp(decay_stage_time[voice], 0.001f, 10.f);
+			decay_stage_slope[voice] = params[KNOB_DECAYSLOPE_PARAM].getValue();
+			decay_stage_slope[voice] = rescaleTinyKnobs(decay_stage_slope[voice]);
+
+			// Sustain
+			sustain_level[voice] = params[KNOB_SUSTAIN_PARAM].getValue();
+			if (inputs[JACK_SUSTAIN_INPUT].isConnected())
+				sustain_level[voice] += inputs[JACK_SUSTAIN_INPUT].getPolyVoltage(voice) / 10.f;
+			sustain_level[voice] = clamp(sustain_level[voice], 0.f, 10.f);
+
+			// Delay
+			delay_stage_time[voice] = params[KNOB_DELAY_PARAM].getValue();
+			if (inputs[JACK_DELAY_INPUT].isConnected())
+				delay_stage_time[voice] += inputs[JACK_DELAY_INPUT].getPolyVoltage(voice) / 10.f;
+			delay_stage_time[voice] = rescaleBigKnobs(delay_stage_time[voice]);
+			delay_stage_time[voice] = clamp(delay_stage_time[voice], 0.f, 10.f);
+
+
+			// Release
+			release_stage_time[voice] = params[KNOB_RELEASE_PARAM].getValue();
+			if (inputs[JACK_RELEASE_INPUT].isConnected())
+				release_stage_time[voice] += inputs[JACK_RELEASE_INPUT].getPolyVoltage(voice) / 10.f;
+			release_stage_time[voice] = rescaleBigKnobs(release_stage_time[voice]);
+			release_stage_time[voice] = clamp(release_stage_time[voice], 0.001f, 10.f);
+			release_stage_slope[voice] = params[KNOB_RELEASESLOPE_PARAM].getValue();
+			release_stage_slope[voice] = rescaleTinyKnobs(release_stage_slope[voice]);
+
+			// Gate
+			gate[voice].process(inputs[JACK_GATE_INPUT].getPolyVoltage(voice));
+
+			// Retrigger
+			retrigger[voice].process(inputs[JACK_RETRIGGER_INPUT].getPolyVoltage(voice));
+
+			if (started) {
+				if (completed) {
+					if (gate[voice].isHigh()) {
+						if (retrigger[voice].isHigh()) {
+							completed = false;
+							stage[voice] = START_STAGE;
+							stagetime[voice] = 0.f;
+						}
+					}
+					else {
+						started = false;
+					}
+				}
+				else {
+					if (gate[voice].isHigh()) {
+						if (retrigger[voice].isHigh()) {
+							stage[voice] = START_STAGE;
+							stagetime[voice] = 0.f;
+						}
+					}
+					else {
+						started = false;
+						stage[voice] = RELEASE_STAGE;
+						stagetime[voice] = 0.f;
+					}
+				}
+			}
+			else {
+				if (completed) {
+					if (gate[voice].isHigh()) {
+						started = true;
+						completed = false;
+						stage[voice] = START_STAGE;
+						stagetime[voice] = 0.f;
+					}
+				}
+			}
+
+			switch(stage[voice]) {
+				case STOP_STAGE: {
+						env[voice] = 0.f;
+						stagetime[voice] = 0.f;
+						break;
+					}
+				case START_STAGE: {
+						stagetime[voice] += args.sampleTime;
+						if (stagetime[voice] >= start_stage_time[voice]) {
+							stagetime[voice] = 0.f;
+							stage[voice] = ATTACK_STAGE;
+						}
+						startled_brightness += 1.f / voices;
+						lights[LED_START_LIGHT].setBrightness(startled_brightness);
+						break;
+					}
+				case ATTACK_STAGE: {
+						stagetime[voice] += args.sampleTime;
+						env[voice] = target_level[voice] * std::pow(stagetime[voice] / attack_stage_time[voice], attack_stage_slope[voice]);
+						lastenv[voice] = env[voice];
+						if (stagetime[voice] >= attack_stage_time[voice]) {
+							stagetime[voice] = 0.f;
+							stage[voice] = HOLD_STAGE;
+						}
+						attackled_brightness += 1.f / voices;
+						lights[LED_ATTACK_LIGHT].setBrightness(attackled_brightness);
+						break;
+					}
+				case HOLD_STAGE: {
+						stagetime[voice] += args.sampleTime;
+						if (stagetime[voice] >= hold_stage_time[voice]) {
+							stagetime[voice] = 0.f;
+							stage[voice] = DECAY_STAGE;
+						}
+						holdled_brightness += 1.f / voices;
+						lights[LED_HOLD_LIGHT].setBrightness(holdled_brightness);
+						break;
+					}
+				case DECAY_STAGE: {
+						stagetime[voice] += args.sampleTime;
+						env[voice] = target_level[voice] - (target_level[voice] - sustain_level[voice]) * std::pow(stagetime[voice] / decay_stage_time[voice], decay_stage_slope[voice]);
+						lastenv[voice] = env[voice];
+						if (stagetime[voice] >= decay_stage_time[voice]) {
+							stagetime[voice] = 0.f;
+							stage[voice] = DELAY_STAGE;
+						}
+						decayled_brightness += 1.f / voices;
+						lights[LED_DECAY_LIGHT].setBrightness(decayled_brightness);
+						break;
+					}
+				case DELAY_STAGE: {
+						stagetime[voice] += args.sampleTime;
+						if (stagetime[voice] >= delay_stage_time[voice]) {
+							stagetime[voice] = 0.f;
+							stage[voice] = RELEASE_STAGE;
+						}
+						delayled_brightness += 1.f / voices;
+						lights[LED_DELAY_LIGHT].setBrightness(delayled_brightness);
+						break;
+					}
+				case RELEASE_STAGE: {
+						completed = true;
+						stagetime[voice] += args.sampleTime;
+						env[voice] = lastenv[voice] - (lastenv[voice]) * std::pow(stagetime[voice] / release_stage_time[voice], release_stage_slope[voice]);
+						if (stagetime[voice] >= release_stage_time[voice]) {
+							stagetime[voice] = 0.f;
+							stage[voice] = STOP_STAGE;
+						}
+						releaseled_brightness += 1.f / voices;
+						lights[LED_RELEASE_LIGHT].setBrightness(releaseled_brightness);
+						break;
+					}
+			}
+
+			// Set output
+			outputs[JACK_ENVELOPE_OUTPUT].setVoltage(env[voice], voice);
+		}
+	}
+}
+
+Envelope_1Widget::Envelope_1Widget(Envelope_1* module) {
+	setModule(module);
+	setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/panels/envelope-1.svg")));
+
+	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 13.00)), module, Envelope_1::KNOB_START_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 26.50)), module, Envelope_1::KNOB_ATTACK_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(20.319, 40.00)), module, Envelope_1::KNOB_TARGET_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 50.00)), module, Envelope_1::KNOB_HOLD_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 63.50)), module, Envelope_1::KNOB_DECAY_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(20.319, 77.00)), module, Envelope_1::KNOB_SUSTAIN_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 87.00)), module, Envelope_1::KNOB_DELAY_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 100.5)), module, Envelope_1::KNOB_RELEASE_PARAM));
+
+	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(19.394, 26.50)), module, Envelope_1::KNOB_ATTACKSLOPE_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(19.394, 63.50)), module, Envelope_1::KNOB_DECAYSLOPE_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(19.394, 100.5)), module, Envelope_1::KNOB_RELEASESLOPE_PARAM));
+
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 13.00)), module, Envelope_1::JACK_START_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 26.50)), module, Envelope_1::JACK_ATTACK_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 40.00)), module, Envelope_1::JACK_TARGET_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 50.00)), module, Envelope_1::JACK_HOLD_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 63.50)), module, Envelope_1::JACK_DECAY_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 77.00)), module, Envelope_1::JACK_SUSTAIN_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 87.00)), module, Envelope_1::JACK_DELAY_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 100.5)), module, Envelope_1::JACK_RELEASE_INPUT));
+
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec( 8.72, 112.69)), module, Envelope_1::JACK_GATE_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20.32, 112.69)), module, Envelope_1::JACK_RETRIGGER_INPUT));
+
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.923, 112.69)), module, Envelope_1::JACK_ENVELOPE_OUTPUT));
+
+	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 13.00)), module, Envelope_1::LED_START_LIGHT));
+	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 26.50)), module, Envelope_1::LED_ATTACK_LIGHT));
+	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 50.00)), module, Envelope_1::LED_HOLD_LIGHT));
+	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 63.50)), module, Envelope_1::LED_DECAY_LIGHT));
+	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 87.00)), module, Envelope_1::LED_DELAY_LIGHT));
+	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 100.5)), module, Envelope_1::LED_RELEASE_LIGHT));
+}
+
+SmallEnvelope_1Widget::SmallEnvelope_1Widget(Envelope_1* module) {
+	setModule(module);
+	setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/panels/smallenvelope-1.svg")));
+
+	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(9.0, 12.0)), module, Envelope_1::KNOB_ATTACK_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(9.0, 34.0)), module, Envelope_1::KNOB_DECAY_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(9.0, 56.0)), module, Envelope_1::KNOB_SUSTAIN_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(9.0, 78.0)), module, Envelope_1::KNOB_RELEASE_PARAM));
+
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(5.0, 22.0)), module, Envelope_1::JACK_ATTACK_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(5.0, 44.0)), module, Envelope_1::JACK_DECAY_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(5.0, 66.0)), module, Envelope_1::JACK_SUSTAIN_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(5.0, 88.0)), module, Envelope_1::JACK_RELEASE_INPUT));
+
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 101)), module, Envelope_1::JACK_GATE_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 110)), module, Envelope_1::JACK_RETRIGGER_INPUT));
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 119)), module, Envelope_1::JACK_ENVELOPE_OUTPUT));
+
+	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(12.82,  6.015)), module, Envelope_1::LED_ATTACK_LIGHT));
+	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(12.82, 28.015)), module, Envelope_1::LED_DECAY_LIGHT));
+	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(12.82, 50.015)), module, Envelope_1::LED_DELAY_LIGHT));
+	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(12.82, 72.015)), module, Envelope_1::LED_RELEASE_LIGHT));
+}
+
+Model* modelEnvelope_1 = createModel<Envelope_1, Envelope_1Widget>("Envelope-1");
+Model* modelSmallEnvelope_1 = createModel<Envelope_1, SmallEnvelope_1Widget>("ADSR");
 
 // Quadratic rescale seconds with milliseconds
 float Envelope_1::rescaleBigKnobs(float x) {
@@ -39,262 +315,6 @@ float Envelope_1::rescaleTinyKnobs(float x) {
 
 	return x;
 }
-
-void Envelope_1::process(const ProcessArgs& args) {
-	// 0.16-0.19 us serial
-	// 0.23 us serial with all lambdas computed
-	// 0.15-0.18 us serial with all lambdas computed with SSE
-
-	int channels = inputs[GATEJACK_INPUT].getChannels();
-
-	// Compute lambdas
-	if (cvDivider.process()) {
-		for (int channel = 0; channel < channels; channel++) {
-
-			// Start
-			startParamValue[channel] = params[STARTKNOB_PARAM].getValue();
-			if (inputs[STARTJACK_INPUT].isConnected())
-				startParamValue[channel] += inputs[STARTJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			startParamValue[channel] = rescaleBigKnobs(startParamValue[channel]);
-			startParamValue[channel] = clamp(startParamValue[channel], 0.f, 10.f);
-
-			// Attack
-			attackParamValue[channel] = params[ATTACKKNOB_PARAM].getValue();
-			if (inputs[ATTACKJACK_INPUT].isConnected())
-				attackParamValue[channel] += inputs[ATTACKJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			attackParamValue[channel] = rescaleBigKnobs(attackParamValue[channel]);
-			attackParamValue[channel] = clamp(attackParamValue[channel], 0.001f, 10.f);
-			attackSlopeParamValue[channel] = params[ATTACKSLOPEKNOB_PARAM].getValue();
-			attackSlopeParamValue[channel] = rescaleTinyKnobs(attackSlopeParamValue[channel]);
-
-			// Hold
-			holdParamValue[channel] = params[HOLDKNOB_PARAM].getValue();
-			if (inputs[HOLDJACK_INPUT].isConnected())
-				holdParamValue[channel] += inputs[HOLDJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			holdParamValue[channel] = rescaleBigKnobs(holdParamValue[channel]);
-			holdParamValue[channel] = clamp(holdParamValue[channel], 0.f, 10.f);
-
-			// Target
-			targetParamValue[channel] = params[TARGETKNOB_PARAM].getValue();
-			if (inputs[TARGETJACK_INPUT].isConnected())
-				targetParamValue[channel] += inputs[TARGETJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			targetParamValue[channel] = clamp(targetParamValue[channel], 0.f, 10.f);
-
-			// Decay
-			decayParamValue[channel] = params[DECAYKNOB_PARAM].getValue();
-			if (inputs[DECAYJACK_INPUT].isConnected())
-				decayParamValue[channel] += inputs[DECAYJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			decayParamValue[channel] = rescaleBigKnobs(decayParamValue[channel]);
-			decayParamValue[channel] = clamp(decayParamValue[channel], 0.001f, 10.f);
-			decaySlopeParamValue[channel] = params[DECAYSLOPEKNOB_PARAM].getValue();
-			decaySlopeParamValue[channel] = rescaleTinyKnobs(decaySlopeParamValue[channel]);
-
-			// Sustain
-			sustainParamValue[channel] = params[SUSTAINKNOB_PARAM].getValue();
-			if (inputs[SUSTAINJACK_INPUT].isConnected())
-				sustainParamValue[channel] += inputs[SUSTAINJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			sustainParamValue[channel] = clamp(sustainParamValue[channel], 0.f, 10.f);
-
-			// Delay
-			delayParamValue[channel] = params[DELAYKNOB_PARAM].getValue();
-			if (inputs[DELAYJACK_INPUT].isConnected())
-				delayParamValue[channel] += inputs[DELAYJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			delayParamValue[channel] = rescaleBigKnobs(delayParamValue[channel]);
-			delayParamValue[channel] = clamp(delayParamValue[channel], 0.f, 10.f);
-
-
-			// Release
-			releaseParamValue[channel] = params[RELEASEKNOB_PARAM].getValue();
-			if (inputs[RELEASEJACK_INPUT].isConnected())
-				releaseParamValue[channel] += inputs[RELEASEJACK_INPUT].getPolyVoltage(channel) / 10.f;
-			releaseParamValue[channel] = rescaleBigKnobs(releaseParamValue[channel]);
-			releaseParamValue[channel] = clamp(releaseParamValue[channel], 0.001f, 10.f);
-			releaseSlopeParamValue[channel] = params[RELEASESLOPEKNOB_PARAM].getValue();
-			releaseSlopeParamValue[channel] = rescaleTinyKnobs(releaseSlopeParamValue[channel]);
-		}
-	}
-
-	for (int channel = 0; channel < channels; channel++) {
-		// Gate
-		if (inputs[GATEJACK_INPUT].isConnected())
-			gate[channel].process(inputs[GATEJACK_INPUT].getPolyVoltage(channel));
-
-		// Retrigger
-		if (inputs[TRIGJACK_INPUT].isConnected())
-			trigger[channel].process(inputs[TRIGJACK_INPUT].getPolyVoltage(channel));
-
-		if (gate[channel].isHigh() && trigger[channel].isHigh()) {
-			stagetime[channel] = 0.f;
-			stage[channel] = START_STAGE;
-		} else if (!gate[channel].isHigh() && !(stage[channel] == STOP_STAGE) && !(stage[channel] == RELEASE_STAGE)) {
-			stagetime[channel] = 0.f;
-			stage[channel] = RELEASE_STAGE;
-		}
-
-		switch(stage[channel]) {
-			case STOP_STAGE:
-				env[channel] = 0.f;
-				stagetime[channel] = 0.f;
-				break;
-			case START_STAGE: {
-					stagetime[channel] += args.sampleTime;
-					if (stagetime[channel] >= startParamValue[channel]) {
-						stagetime[channel] = 0.f;
-						stage[channel] = ATTACK_STAGE;
-					}
-					break;
-				}
-			case ATTACK_STAGE: {
-					stagetime[channel] += args.sampleTime;
-					env[channel] = targetParamValue[channel] * std::pow(stagetime[channel] / attackParamValue[channel], attackSlopeParamValue[channel]);
-					lastenv[channel] = env[channel];
-					if (stagetime[channel] >= attackParamValue[channel]) {
-						stagetime[channel] = 0.f;
-						stage[channel] = HOLD_STAGE;
-					}
-					break;
-				}
-			case HOLD_STAGE: {
-					stagetime[channel] += args.sampleTime;
-					if (stagetime[channel] >= holdParamValue[channel]) {
-						stagetime[channel] = 0.f;
-						stage[channel] = DECAY_STAGE;
-					}
-					break;
-				}
-			case DECAY_STAGE: {
-					stagetime[channel] += args.sampleTime;
-					env[channel] = targetParamValue[channel] - (targetParamValue[channel] - sustainParamValue[channel]) * std::pow(stagetime[channel] / decayParamValue[channel], decaySlopeParamValue[channel]);
-					lastenv[channel] = env[channel];
-					if (stagetime[channel] >= decayParamValue[channel]) {
-						stagetime[channel] = 0.f;
-						stage[channel] = DELAY_STAGE;
-					}
-					break;
-				}
-			case DELAY_STAGE: {
-					stagetime[channel] += args.sampleTime;
-					if (stagetime[channel] >= delayParamValue[channel]) {
-						stagetime[channel] = 0.f;
-						stage[channel] = RELEASE_STAGE;
-					}
-					break;
-				}
-			case RELEASE_STAGE: {
-					stagetime[channel] += args.sampleTime;
-					env[channel] = lastenv[channel] - (lastenv[channel]) * std::pow(stagetime[channel] / releaseParamValue[channel], releaseSlopeParamValue[channel]);
-					if (stagetime[channel] >= releaseParamValue[channel]) {
-						stagetime[channel] = 0.f;
-						stage[channel] = STOP_STAGE;
-					}
-					break;
-				}
-		}
-
-		// Set output
-		outputs[ENVELOPEJACK_OUTPUT].setVoltage(env[channel], channel);
-	}
-
-	outputs[ENVELOPEJACK_OUTPUT].setChannels(channels);
-
-	// Lights
-	if (lightDivider.process()) {
-		lights[STARTLED_LIGHT].setBrightness(0);
-		lights[ATTACKLED_LIGHT].setBrightness(0);
-		lights[HOLDLED_LIGHT].setBrightness(0);
-		lights[DECAYLED_LIGHT].setBrightness(0);
-		lights[DELAYLED_LIGHT].setBrightness(0);
-		lights[RELEASELED_LIGHT].setBrightness(0);
-
-		float startledBrightness = 0.f;
-		float attackledBrightness = 0.f;
-		float holdledBrightness = 0.f;
-		float decayledBrightness = 0.f;
-		float delayledBrightness = 0.f;
-		float releaseledBrightness = 0.f;
-		for (int channel = 0; channel < channels; channel++) {
-			switch(stage[channel]) {
-				case START_STAGE: {
-						startledBrightness += 0.0625f;
-						lights[STARTLED_LIGHT].setBrightness(startledBrightness);
-						break;
-					}
-				case ATTACK_STAGE: {
-						attackledBrightness += 0.0625f;
-						lights[ATTACKLED_LIGHT].setBrightness(attackledBrightness);
-						break;
-					}
-				case HOLD_STAGE: {
-						holdledBrightness += 0.0625f;
-						lights[HOLDLED_LIGHT].setBrightness(holdledBrightness);
-						break;
-					}
-				case DECAY_STAGE: {
-						decayledBrightness += 0.0625f;
-						lights[DECAYLED_LIGHT].setBrightness(decayledBrightness);
-						break;
-					}
-				case DELAY_STAGE: {
-						delayledBrightness += 0.0625f;
-						lights[DELAYLED_LIGHT].setBrightness(delayledBrightness);
-						break;
-					}
-				case RELEASE_STAGE: {
-						releaseledBrightness += 0.0625f;
-						lights[RELEASELED_LIGHT].setBrightness(releaseledBrightness);
-						break;
-					}
-				default: 	break;
-			}
-		}
-	}
-}
-
-Envelope_1Widget::Envelope_1Widget(Envelope_1* module) {
-	setModule(module);
-	setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/panels/envelope-1.svg")));
-
-	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-
-	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 13.00)), module, Envelope_1::STARTKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 26.50)), module, Envelope_1::ATTACKKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(20.319, 40.00)), module, Envelope_1::TARGETKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 50.00)), module, Envelope_1::HOLDKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 63.50)), module, Envelope_1::DECAYKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(20.319, 77.00)), module, Envelope_1::SUSTAINKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 87.00)), module, Envelope_1::DELAYKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnobWhite>(mm2px(Vec(31.000, 100.5)), module, Envelope_1::RELEASEKNOB_PARAM));
-
-	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(19.394, 26.50)), module, Envelope_1::ATTACKSLOPEKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(19.394, 63.50)), module, Envelope_1::DECAYSLOPEKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnob4WhiteTiny>(mm2px(Vec(19.394, 100.5)), module, Envelope_1::RELEASESLOPEKNOB_PARAM));
-
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 13.00)), module, Envelope_1::STARTJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 26.50)), module, Envelope_1::ATTACKJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 40.00)), module, Envelope_1::TARGETJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 50.00)), module, Envelope_1::HOLDJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 63.50)), module, Envelope_1::DECAYJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 77.00)), module, Envelope_1::SUSTAINJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 87.00)), module, Envelope_1::DELAYJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.72, 100.5)), module, Envelope_1::RELEASEJACK_INPUT));
-
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.720, 112.69)), module, Envelope_1::GATEJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20.32, 112.69)), module, Envelope_1::TRIGJACK_INPUT));
-
-	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(31.923, 112.69)), module, Envelope_1::ENVELOPEJACK_OUTPUT));
-
-	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 13.00)), module, Envelope_1::STARTLED_LIGHT));
-	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 26.50)), module, Envelope_1::ATTACKLED_LIGHT));
-	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 50.00)), module, Envelope_1::HOLDLED_LIGHT));
-	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 63.50)), module, Envelope_1::DECAYLED_LIGHT));
-	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 87.00)), module, Envelope_1::DELAYLED_LIGHT));
-	addChild(createLightCentered<TinyLight<YellowLight>>(mm2px(Vec(38.1, 100.5)), module, Envelope_1::RELEASELED_LIGHT));
-}
-
-Model* modelEnvelope_1 = createModel<Envelope_1, Envelope_1Widget>("Envelope-1");
 
 float EnvelopeKnobParamQuantity::getDisplayValue() {
 	float x = getValue();

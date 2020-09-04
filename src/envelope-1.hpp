@@ -2,43 +2,43 @@
 
 struct Envelope_1 : Module {
 	enum ParamIds {
-		STARTKNOB_PARAM,
-		ATTACKKNOB_PARAM,
-		ATTACKSLOPEKNOB_PARAM,
-		TARGETKNOB_PARAM,
-		HOLDKNOB_PARAM,
-		DECAYKNOB_PARAM,
-		DECAYSLOPEKNOB_PARAM,
-		SUSTAINKNOB_PARAM,
-		DELAYKNOB_PARAM,
-		RELEASEKNOB_PARAM,
-		RELEASESLOPEKNOB_PARAM,
+		KNOB_START_PARAM,
+		KNOB_ATTACK_PARAM,
+		KNOB_HOLD_PARAM,
+		KNOB_DECAY_PARAM,
+		KNOB_DELAY_PARAM,
+		KNOB_RELEASE_PARAM,
+		KNOB_ATTACKSLOPE_PARAM,
+		KNOB_DECAYSLOPE_PARAM,
+		KNOB_RELEASESLOPE_PARAM,
+		KNOB_TARGET_PARAM,
+		KNOB_SUSTAIN_PARAM,
 		NUM_PARAMS
 	};
 	enum InputIds {
-		STARTJACK_INPUT,
-		ATTACKJACK_INPUT,
-		TARGETJACK_INPUT,
-		HOLDJACK_INPUT,
-		DECAYJACK_INPUT,
-		SUSTAINJACK_INPUT,
-		DELAYJACK_INPUT,
-		RELEASEJACK_INPUT,
-		GATEJACK_INPUT,
-		TRIGJACK_INPUT,
+		JACK_START_INPUT,
+		JACK_ATTACK_INPUT,
+		JACK_TARGET_INPUT,
+		JACK_HOLD_INPUT,
+		JACK_DECAY_INPUT,
+		JACK_SUSTAIN_INPUT,
+		JACK_DELAY_INPUT,
+		JACK_RELEASE_INPUT,
+		JACK_GATE_INPUT,
+		JACK_RETRIGGER_INPUT,
 		NUM_INPUTS
 	};
 	enum OutputIds {
-		ENVELOPEJACK_OUTPUT,
+		JACK_ENVELOPE_OUTPUT,
 		NUM_OUTPUTS
 	};
 	enum LightIds {
-		STARTLED_LIGHT,
-		ATTACKLED_LIGHT,
-		HOLDLED_LIGHT,
-		DECAYLED_LIGHT,
-		DELAYLED_LIGHT,
-		RELEASELED_LIGHT,
+		LED_START_LIGHT,
+		LED_ATTACK_LIGHT,
+		LED_HOLD_LIGHT,
+		LED_DECAY_LIGHT,
+		LED_DELAY_LIGHT,
+		LED_RELEASE_LIGHT,
 		NUM_LIGHTS
 	};
 	enum StagesIds {
@@ -51,43 +51,46 @@ struct Envelope_1 : Module {
 		RELEASE_STAGE
 	};
 
+	bool started = false;
+	bool completed = true;
+
 	float env[16] = {0.f};
 	float lastenv[16] = {0.f};
 	float stagetime[16] = {0.f};
 	StagesIds stage[16] = {STOP_STAGE};
-	dsp::TSchmittTrigger<float> trigger[16];
+	dsp::TSchmittTrigger<float> retrigger[16];
 	dsp::TSchmittTrigger<float> gate[16];
-	dsp::ClockDivider cvDivider;
 
-	float startParamValue[16] = {0.f};
-	float attackParamValue[16] = {0.f};
-	float holdParamValue[16] = {0.f};
-	float decayParamValue[16] = {0.f};
-	float delayParamValue[16] = {0.f};
-	float releaseParamValue[16] = {0.f};
+	float start_stage_time[16] = {0.f};
+	float attack_stage_time[16] = {0.f};
+	float hold_stage_time[16] = {0.f};
+	float decay_stage_time[16] = {0.f};
+	float delay_stage_time[16] = {0.f};
+	float release_stage_time[16] = {0.f};
 
-	float attackSlopeParamValue[16] = {0.f};
-	float decaySlopeParamValue[16] = {0.f};
-	float releaseSlopeParamValue[16] = {0.f};
+	float attack_stage_slope[16] = {0.f};
+	float decay_stage_slope[16] = {0.f};
+	float release_stage_slope[16] = {0.f};
 
-	float targetParamValue[16] = {0.f};
-	float sustainParamValue[16] = {0.f};
+	float target_level[16] = {0.f};
+	float sustain_level[16] = {0.f};
 
 	float curve[16] = {0.f};
 
-	dsp::ClockDivider lightDivider;
-
 	Envelope_1();
-
-	float rescaleBigKnobs(float x);
-	float rescaleTinyKnobs(float x);
 
 	void process(const ProcessArgs& args) override;
 
+	float rescaleBigKnobs(float x);
+	float rescaleTinyKnobs(float x);
 };
 
 struct Envelope_1Widget : ModuleWidget {
 	Envelope_1Widget(Envelope_1* module);
+};
+
+struct SmallEnvelope_1Widget : ModuleWidget {
+	SmallEnvelope_1Widget(Envelope_1* module);
 };
 
 struct EnvelopeKnobParamQuantity : ParamQuantity {

@@ -32,6 +32,15 @@
       ]
     },
 {
+      "slug": "ADSR",
+      "name": "ADSR",
+      "description": "Generates an envelope with Attack/Decay/Sustain/Release. For small and tight patches",
+      "tags": [
+        "Envelope Generator",
+        "Polyphonic"
+      ]
+    },
+{
       "slug": "LFO-1",
       "name": "LFO",
       "description": "Low-frequency oscillator",

@@ -9,6 +9,7 @@ extern Plugin* pluginInstance;
 // Declare each Model, defined in each module source file
 extern Model* modelVCO_1;
 extern Model* modelEnvelope_1;
+extern Model* modelSmallEnvelope_1;
 extern Model* modelLFO_1;
 extern Model* modelMixer_1;
 
