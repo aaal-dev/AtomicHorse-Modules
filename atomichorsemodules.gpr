@@ -6,6 +6,7 @@ project Atomichorsemodules is
    for Languages use ("C", "C++", "Javascript");
 
    package Naming is
+      for Spec_Suffix ("c") use ".h";
       for Spec_Suffix ("c++") use ".hpp";
       for Spec_Suffix ("javascript") use ".json";
    end Naming;
