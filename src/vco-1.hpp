@@ -2,55 +2,55 @@
 
 struct VCO_1 : Module {
 	enum ParamIds {
-		TUNEKNOB_PARAM,
-		FREQKNOB_PARAM,
-		OCTAVEKNOB_PARAM,
-		PULSEWIDTHKNOB_PARAM,
-		FMKNOB_PARAM,
-		PWMKNOB_PARAM,
-		SIGNALTYPE_PARAM,
-		SYNCMODE_PARAM,
+		KNOB_FREQ_PARAM,
+		KNOB_FM_PARAM,
+		KNOB_TUNE_PARAM,
+		KNOB_OCTAVE_PARAM,
+		KNOB_PULSEWIDTH_PARAM,
+		KNOB_PWM_PARAM,
+		SWITCH_SIGNALTYPE_PARAM,
+		SWITCH_SYNCMODE_PARAM,
 		NUM_PARAMS
 	};
 
 	enum InputIds {
-		OCTAVEJACK_INPUT,
-		TUNEJACK_INPUT,
-		VOCTJACK_INPUT,
-		FMJACK_INPUT,
-		PWMJACK_INPUT,
-		SYNCJACK_INPUT,
+		JACK_OCTAVE_INPUT,
+		JACK_TUNE_INPUT,
+		JACK_VOCT_INPUT,
+		JACK_FM_INPUT,
+		JACK_PWM_INPUT,
+		JACK_SYNC_INPUT,
 		NUM_INPUTS
 	};
 
 	enum OutputIds {
-		SINEWAVEJACK_OUTPUT,
-		TRIANGLEWAVEJACK_OUTPUT,
-		SAWWAVEJACK_OUTPUT,
-		SQUAREWAVEJACK_OUTPUT,
+		JACK_SINEWAVE_OUTPUT,
+		JACK_TRIANGLEWAVE_OUTPUT,
+		JACK_SAWWAVE_OUTPUT,
+		JACK_SQUAREWAVE_OUTPUT,
 		NUM_OUTPUTS
 	};
 
 	enum LightIds {
-		BLINK_LIGHT,
+		LED_BLINK_LIGHT,
 		NUM_LIGHTS
 	};
 
-	simd::float_4 phase = 0.f;
-	simd::float_4 lastSyncValue = 0.f;
-	simd::float_4 syncDirection = 1.f;
+	simd::float_4 phase[16] = {0.f};
+	simd::float_4 last_sync[16] = {0.f};
+	simd::float_4 sync_direction[16] = {1.f};
 
 	float sync = 0.f;
 
 	bool analogsignal = false;
 	bool softsync = false;
 
-	dsp::TRCFilter<simd::float_4> sqrFilter;
+	dsp::TRCFilter<simd::float_4> sqr_filter[16];
 
-	dsp::MinBlepGenerator<16, 32, simd::float_4> sinewaveMinBlep;
-	dsp::MinBlepGenerator<16, 32, simd::float_4> trianglewaveMinBlep;
-	dsp::MinBlepGenerator<16, 32, simd::float_4> sawwaveMinBlep;
-	dsp::MinBlepGenerator<16, 32, simd::float_4> squarewaveMinBlep;
+	dsp::MinBlepGenerator<16, 32, simd::float_4> sinewave_blep[16];
+	dsp::MinBlepGenerator<16, 32, simd::float_4> trianglewave_blep[16];
+	dsp::MinBlepGenerator<16, 32, simd::float_4> sawwave_blep[16];
+	dsp::MinBlepGenerator<16, 32, simd::float_4> squarewave_blep[16];
 
 	VCO_1();
 

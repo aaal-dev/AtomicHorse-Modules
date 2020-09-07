@@ -51,8 +51,8 @@ struct Envelope_1 : Module {
 		RELEASE_STAGE
 	};
 
-	bool started = false;
-	bool completed = true;
+	float started[16] = {0.f};
+	float completed[16] = {1.f};
 
 	float env[16] = {0.f};
 	float lastenv[16] = {0.f};
@@ -95,5 +95,4 @@ struct SmallEnvelope_1Widget : ModuleWidget {
 
 struct EnvelopeKnobParamQuantity : ParamQuantity {
 	float getDisplayValue() override;
-	void setDisplayValue(float v) override;
 };

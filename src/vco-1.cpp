@@ -2,14 +2,14 @@
 
 VCO_1::VCO_1() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-	configParam(SIGNALTYPE_PARAM, 0.f, 1.f, 1.f, "Analog or digital signal type");
-	configParam(SYNCMODE_PARAM, 0.f, 1.f, 1.f, "Hard or soft sync mode");
-	configParam<VCOFreqKnobParamQuantity>(FREQKNOB_PARAM, -3.0f, 6.0f, 0.0f, "Frequency", " Hz");
-	configParam(TUNEKNOB_PARAM, -1.f, 1.f, 0.f, "Fine tune");
-	configParam(OCTAVEKNOB_PARAM, -3, 2, 0, "Octave", "'");
-	configParam(FMKNOB_PARAM, 0.f, 1.f, 0.f, "Frequency modulation depth", "%", 0.f, 100.f);
-	configParam(PULSEWIDTHKNOB_PARAM, 0.99f, 0.01f, 0.5f, "Pulse width", "%", 0.f, 100.f);
-	configParam(PWMKNOB_PARAM, 0.f, 1.f, 0.f, "Pulse width modulation depth", "%", 0.f, 100.f);
+	configParam<VCOFreqKnobParamQuantity>(KNOB_FREQ_PARAM, -6.0f, 6.0f, 0.0f, "Frequency", " Hz");
+	configParam(KNOB_FM_PARAM, 0.f, 1.f, 0.f, "Frequency modulation depth", "%", 0.f, 100.f);
+	configParam(KNOB_TUNE_PARAM, -1.f, 1.f, 0.f, "Fine tune");
+	configParam(KNOB_OCTAVE_PARAM, -3, 2, 0, "Octave", "'");
+	configParam(KNOB_PULSEWIDTH_PARAM, 0.99f, 0.01f, 0.5f, "Pulse width", "%", 0.f, 100.f);
+	configParam(KNOB_PWM_PARAM, 0.f, 1.f, 0.f, "Pulse width modulation depth", "%", 0.f, 100.f);
+	configParam(SWITCH_SIGNALTYPE_PARAM, 0.f, 1.f, 1.f, "Analog or digital signal type");
+	configParam(SWITCH_SYNCMODE_PARAM, 0.f, 1.f, 1.f, "Hard or soft sync mode");
 }
 
 simd::float_4 VCO_1::sin2pi_pade_05_5_4(simd::float_4 x) {
@@ -68,167 +68,170 @@ simd::float_4 VCO_1::squarewave(simd::float_4 phase, float pwParamValue) {
 
 void VCO_1::process(const ProcessArgs& args) {
 	// Freguency parameter
-	simd::float_4 freqParamValue = params[FREQKNOB_PARAM].getValue();
-	if (inputs[FMJACK_INPUT].isConnected()) {
-		float fmSignalValue = inputs[FMJACK_INPUT].getVoltage();
-		float fmParamValue = params[FMKNOB_PARAM].getValue();
-		freqParamValue += fmSignalValue * fmParamValue;
+	float freq_param = params[KNOB_FREQ_PARAM].getValue();
+	if (inputs[JACK_FM_INPUT].isConnected()) {
+		float fm_signal = inputs[JACK_FM_INPUT].getVoltage();
+		float fm_param  = params[KNOB_FM_PARAM].getValue();
+		freq_param += fm_signal * fm_param;
 	}
 
 	// Fine tune parameter
-	float tuneParamValue = dsp::quadraticBipolar(params[TUNEKNOB_PARAM].getValue());
-	if (inputs[TUNEJACK_INPUT].isConnected()) {
-		float tuneSignalValue = inputs[TUNEJACK_INPUT].getVoltage();
-		tuneParamValue += tuneSignalValue / 12.f;
+	float tune_param = dsp::quadraticBipolar(params[KNOB_TUNE_PARAM].getValue());
+	if (inputs[JACK_TUNE_INPUT].isConnected()) {
+		float tune_signal = inputs[JACK_TUNE_INPUT].getVoltage();
+		tune_param += tune_signal / 12.f;
 	}
-	freqParamValue += tuneParamValue;
+	freq_param += tune_param;
 
 	// Octave parameter
-	float octaveParamValue = params[OCTAVEKNOB_PARAM].getValue();
-	if (inputs[OCTAVEJACK_INPUT].isConnected()) {
-		float octaveSignalValue = inputs[OCTAVEJACK_INPUT].getVoltage();
-		octaveSignalValue = rescale(octaveSignalValue, -3.f, 2.f, -3.f, 2.f);
-		octaveParamValue += octaveSignalValue;
-		octaveParamValue = clamp(octaveParamValue, -3.f, 2.f);
+	float octave_param = params[KNOB_OCTAVE_PARAM].getValue();
+	if (inputs[JACK_OCTAVE_INPUT].isConnected()) {
+		float octave_signal = inputs[JACK_OCTAVE_INPUT].getVoltage();
+		octave_signal = rescale(octave_signal, -3.f, 2.f, -3.f, 2.f);
+		octave_param += octave_signal;
+		octave_param = clamp(octave_param, -3.f, 2.f);
 	}
-	freqParamValue += (int)octaveParamValue;
+	freq_param += (int)octave_param;
 
 	// Pulse width parameter
-	float pwParamValue = params[PULSEWIDTHKNOB_PARAM].getValue();
-	if (inputs[PWMJACK_INPUT].isConnected()) {
-		float pwmSignalValue = inputs[PWMJACK_INPUT].getVoltage() / 10.f;
-		pwmSignalValue = rescale(pwmSignalValue, 0.f, 1.f, 0.f, 1.f);
-		float pwmParamValue = params[PWMKNOB_PARAM].getValue();
-		pwParamValue += pwmSignalValue * pwmParamValue;
+	float pulsewidth_param = params[KNOB_PULSEWIDTH_PARAM].getValue();
+	if (inputs[JACK_PWM_INPUT].isConnected()) {
+		float pwm_signal = inputs[JACK_PWM_INPUT].getVoltage() / 10.f;
+		float pwm_param = params[KNOB_PWM_PARAM].getValue();
+		pwm_signal = rescale(pwm_signal, 0.f, 1.f, 0.f, 1.f);
+		pulsewidth_param += pwm_signal * pwm_param;
 	}
-	pwParamValue = clamp(pwParamValue, .01f, .99f);
+	pulsewidth_param = clamp(pulsewidth_param, .01f, .99f);
 
 	// Analog or digital signal parameter
-	analogsignal = params[SIGNALTYPE_PARAM].getValue() > 0.f;
+	analogsignal = params[SWITCH_SIGNALTYPE_PARAM].getValue() > 0.f;
 
 
 
-	int channels = std::max(inputs[VOCTJACK_INPUT].getChannels(), 1);
-	for (int channel = 0; channel < channels; channel += 4) {
-		if (inputs[VOCTJACK_INPUT].isConnected()) {
-			simd::float_4 voctSignalValue = inputs[VOCTJACK_INPUT].getVoltageSimd<simd::float_4>(channel);
-			freqParamValue += voctSignalValue;
+
+	int voices = std::max(inputs[JACK_VOCT_INPUT].getChannels(), 1);
+	outputs[JACK_SINEWAVE_OUTPUT].setChannels(voices);
+	outputs[JACK_TRIANGLEWAVE_OUTPUT].setChannels(voices);
+	outputs[JACK_SAWWAVE_OUTPUT].setChannels(voices);
+	outputs[JACK_SQUAREWAVE_OUTPUT].setChannels(voices);
+
+	for (int voice = 0; voice < voices; voice += 4) {
+		simd::float_4 freq_value = freq_param;
+		if (inputs[JACK_VOCT_INPUT].isConnected()) {
+			simd::float_4 voct_signal = inputs[JACK_VOCT_INPUT].getVoltageSimd<simd::float_4>(voice);
+			freq_value += voct_signal;
 		}
 
-		simd::float_4 freq = dsp::FREQ_C4 * dsp::approxExp2_taylor5(freqParamValue + 30) / 1073741824;
-		simd::float_4 deltaPhase = clamp(freq * args.sampleTime, 1e-6f, 0.35f);
-		phase += deltaPhase;
-		phase -= simd::floor(phase);
+		simd::float_4 frequency = dsp::FREQ_C4 * dsp::approxExp2_taylor5(freq_value + 30) / 1073741824;
+		simd::float_4 delta_phase = clamp(frequency * args.sampleTime, 1e-6f, 0.35f);
+		phase[voice] += delta_phase;
+		phase[voice] -= simd::floor(phase[voice]);
 
-		simd::float_4 wrapPhase = (syncDirection == -1.f) & 1.f;
-		simd::float_4 wrapCrossing = (wrapPhase - (phase - deltaPhase)) / deltaPhase;
-		int wrapMask = simd::movemask((0 < wrapCrossing) & (wrapCrossing <= 1.f));
-		if (wrapMask) {
-			for (int i = 0; i < std::min(channels - channel, 4); i++) {
-				if (wrapMask & (1 << i)) {
+		simd::float_4 wrap_phase = (sync_direction[voice] == -1.f) & 1.f;
+		simd::float_4 wrap_crossing = (wrap_phase - (phase[voice] - delta_phase)) / delta_phase;
+		int wrap_mask = simd::movemask((0 < wrap_crossing) & (wrap_crossing <= 1.f));
+		if (wrap_mask) {
+			for (int i = 0; i < std::min(voices - voice, 4); i++) {
+				if (wrap_mask & (1 << i)) {
 					simd::float_4 mask = simd::movemaskInverse<simd::float_4>(1 << i);
-					float p = wrapCrossing[i] - 1.f;
-					simd::float_4 x = mask & (2.f * syncDirection);
-					squarewaveMinBlep.insertDiscontinuity(p, x);
+					float p = wrap_crossing[i] - 1.f;
+					simd::float_4 x = mask & (2.f * sync_direction[voice]);
+					squarewave_blep[voice].insertDiscontinuity(p, x);
 				}
 			}
 		}
 
-		simd::float_4 pulseCrossing = (pwParamValue - (phase - deltaPhase)) / deltaPhase;
-		int pulseMask = simd::movemask((0 < pulseCrossing) & (pulseCrossing <= 1.f));
-		if (pulseMask) {
-			for (int i = 0; i < std::min(channels - channel, 4); i++) {
-				if (pulseMask & (1 << i)) {
+		simd::float_4 pulse_crossing = (pulsewidth_param - (phase[voice] - delta_phase)) / delta_phase;
+		int pulse_mask = simd::movemask((0 < pulse_crossing) & (pulse_crossing <= 1.f));
+		if (pulse_mask) {
+			for (int i = 0; i < std::min(voices - voice, 4); i++) {
+				if (pulse_mask & (1 << i)) {
 					simd::float_4 mask = simd::movemaskInverse<simd::float_4>(1 << i);
-					float p = pulseCrossing[i] - 1.f;
-					simd::float_4 x = mask & (-2.f * syncDirection);
-					squarewaveMinBlep.insertDiscontinuity(p, x);
+					float p = pulse_crossing[i] - 1.f;
+					simd::float_4 x = mask & (-2.f * sync_direction[voice]);
+					squarewave_blep[voice].insertDiscontinuity(p, x);
 				}
 			}
 		}
 
-		simd::float_4 halfCrossing = (0.5f - (phase - deltaPhase)) / deltaPhase;
-		int halfMask = simd::movemask((0 < halfCrossing) & (halfCrossing <= 1.f));
-		if (halfMask) {
-			for (int i = 0; i < std::min(channels - channel, 4); i++) {
-				if (halfMask & (1 << i)) {
+		simd::float_4 half_crossing = (0.5f - (phase[voice] - delta_phase)) / delta_phase;
+		int half_mask = simd::movemask((0 < half_crossing) & (half_crossing <= 1.f));
+		if (half_mask) {
+			for (int i = 0; i < std::min(voices - voice, 4); i++) {
+				if (half_mask & (1 << i)) {
 					simd::float_4 mask = simd::movemaskInverse<simd::float_4>(1 << i);
-					float p = halfCrossing[i] - 1.f;
-					simd::float_4 x = mask & (-2.f * syncDirection);
-					sawwaveMinBlep.insertDiscontinuity(p, x);
+					float p = half_crossing[i] - 1.f;
+					simd::float_4 x = mask & (-2.f * sync_direction[voice]);
+					sawwave_blep[voice].insertDiscontinuity(p, x);
 				}
 			}
 		}
 
 		// Synchronization
-		if (inputs[SYNCJACK_INPUT].isConnected()) {
-			simd::float_4 syncSignalValue = inputs[SYNCJACK_INPUT].getPolyVoltageSimd<simd::float_4>(channel);
-			simd::float_4 deltaSync = syncSignalValue - lastSyncValue;
-			simd::float_4 syncCrossing = -lastSyncValue / deltaSync;
-			lastSyncValue = syncSignalValue;
-			simd::float_4 syncParamValue = (0.f < syncCrossing) & (syncCrossing <= 1.f) & (syncSignalValue >= 0.f);
-			int syncMask = simd::movemask(syncParamValue);
-			if (syncMask) {
-				if (params[SYNCMODE_PARAM].getValue() <= 0.f) {
-					syncDirection = simd::ifelse(syncParamValue, -syncDirection, syncDirection);
+		if (inputs[JACK_SYNC_INPUT].isConnected()) {
+			simd::float_4 sync_signal = inputs[JACK_SYNC_INPUT].getPolyVoltageSimd<simd::float_4>(voice);
+			simd::float_4 delta_sync = sync_signal - last_sync[voice];
+			simd::float_4 sync_crossing = -last_sync[voice] / delta_sync;
+			last_sync[voice] = sync_signal;
+			simd::float_4 sync_param = (0.f < sync_crossing) & (sync_crossing <= 1.f) & (sync_signal >= 0.f);
+			int sync_mask = simd::movemask(sync_param);
+			if (sync_mask) {
+				if (params[SWITCH_SYNCMODE_PARAM].getValue() <= 0.f) {
+					sync_direction[voice] = simd::ifelse(sync_param, -sync_direction[voice], sync_direction[voice]);
 				} else {
-					simd::float_4 newPhase = simd::ifelse(syncParamValue, (1.f - syncCrossing) * deltaPhase, phase);
+					simd::float_4 new_phase = simd::ifelse(sync_param, (1.f - sync_crossing) * delta_phase, phase[voice]);
 					// Insert minBLEP for sync
-					for (int i = 0; i < std::min(channels - channel, 4); i++) {
-						if (syncMask & (1 << i)) {
+					for (int i = 0; i < std::min(voices - voice, 4); i++) {
+						if (sync_mask & (1 << i)) {
 							simd::float_4 mask = simd::movemaskInverse<simd::float_4>(1 << i);
-							float p = syncCrossing[i] - 1.f;
+							float p = sync_crossing[i] - 1.f;
 							simd::float_4 x;
-							x = mask & (sinewave(newPhase) - sinewave(phase));
-							sinewaveMinBlep.insertDiscontinuity(p, x);
-							x = mask & (trianglewave(newPhase) - trianglewave(phase));
-							trianglewaveMinBlep.insertDiscontinuity(p, x);
-							x = mask & (sawwave(newPhase) - sawwave(phase));
-							sawwaveMinBlep.insertDiscontinuity(p, x);
-							x = mask & (squarewave(newPhase, pwParamValue) - squarewave(phase, pwParamValue));
-							squarewaveMinBlep.insertDiscontinuity(p, x);
+							x = mask & (sinewave(new_phase) - sinewave(phase[voice]));
+							sinewave_blep[voice].insertDiscontinuity(p, x);
+							x = mask & (trianglewave(new_phase) - trianglewave(phase[voice]));
+							trianglewave_blep[voice].insertDiscontinuity(p, x);
+							x = mask & (sawwave(new_phase) - sawwave(phase[voice]));
+							sawwave_blep[voice].insertDiscontinuity(p, x);
+							x = mask & (squarewave(new_phase, pulsewidth_param) - squarewave(phase[voice], pulsewidth_param));
+							squarewave_blep[voice].insertDiscontinuity(p, x);
 						}
 					}
-					phase = newPhase;
+					phase[voice] = new_phase;
 				}
 			}
 		}
 
 		// Sinewave
-		if (outputs[SINEWAVEJACK_OUTPUT].isConnected()) {
-			simd::float_4 sinewave = this->sinewave(phase);
-			sinewave += sinewaveMinBlep.process();
-			outputs[SINEWAVEJACK_OUTPUT].setChannels(channels);
-			outputs[SINEWAVEJACK_OUTPUT].setVoltageSimd(5.f*sinewave, channel);
+		if (outputs[JACK_SINEWAVE_OUTPUT].isConnected()) {
+			simd::float_4 sinewave = this->sinewave(phase[voice]);
+			sinewave += sinewave_blep[voice].process();
+			outputs[JACK_SINEWAVE_OUTPUT].setVoltageSimd(5.f*sinewave, voice);
 		}
 
 		// Trianglewave
-		if (outputs[TRIANGLEWAVEJACK_OUTPUT].isConnected()) {
-			simd::float_4 trianglewave = this->trianglewave(phase);
-			trianglewave += trianglewaveMinBlep.process();
-			outputs[TRIANGLEWAVEJACK_OUTPUT].setChannels(channels);
-			outputs[TRIANGLEWAVEJACK_OUTPUT].setVoltageSimd(5.f*trianglewave, channel);
+		if (outputs[JACK_TRIANGLEWAVE_OUTPUT].isConnected()) {
+			simd::float_4 trianglewave = this->trianglewave(phase[voice]);
+			trianglewave += trianglewave_blep[voice].process();
+			outputs[JACK_TRIANGLEWAVE_OUTPUT].setVoltageSimd(5.f*trianglewave, voice);
 		}
 
 		// Sawwave
-		if (outputs[SAWWAVEJACK_OUTPUT].isConnected()) {
-			simd::float_4 sawwave = this->sawwave(phase);
-			sawwave += sawwaveMinBlep.process();
-			outputs[SAWWAVEJACK_OUTPUT].setChannels(channels);
-			outputs[SAWWAVEJACK_OUTPUT].setVoltageSimd(5.f*sawwave, channel);
+		if (outputs[JACK_SAWWAVE_OUTPUT].isConnected()) {
+			simd::float_4 sawwave = this->sawwave(phase[voice]);
+			sawwave += sawwave_blep[voice].process();
+			outputs[JACK_SAWWAVE_OUTPUT].setVoltageSimd(5.f*sawwave, voice);
 		}
 
 		// Squarewave
-		if (outputs[SQUAREWAVEJACK_OUTPUT].isConnected()) {
-			simd::float_4 squarewave = this->squarewave(phase, pwParamValue);
-			squarewave += squarewaveMinBlep.process();
+		if (outputs[JACK_SQUAREWAVE_OUTPUT].isConnected()) {
+			simd::float_4 squarewave = this->squarewave(phase[voice], pulsewidth_param);
+			squarewave += squarewave_blep[voice].process();
 			if (analogsignal) {
-				sqrFilter.setCutoffFreq(20.f * args.sampleTime);
-				sqrFilter.process(squarewave);
-				squarewave = sqrFilter.highpass() * 0.95f;
+				sqr_filter[voice].setCutoffFreq(20.f * args.sampleTime);
+				sqr_filter[voice].process(squarewave);
+				squarewave = sqr_filter[voice].highpass() * 0.95f;
 			}
-			outputs[SQUAREWAVEJACK_OUTPUT].setChannels(channels);
-			outputs[SQUAREWAVEJACK_OUTPUT].setVoltageSimd(5.f*squarewave, channel);
+			outputs[JACK_SQUAREWAVE_OUTPUT].setVoltageSimd(5.f*squarewave, voice);
 		}
 	}
 }
@@ -243,29 +246,29 @@ VCO_1Widget::VCO_1Widget(VCO_1* module) {
 	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-	addParam(createParamCentered<CKSS>(mm2px(Vec(15.82, 99.574)), module, VCO_1::SIGNALTYPE_PARAM));
-	addParam(createParamCentered<CKSS>(mm2px(Vec(24.82, 99.574)), module, VCO_1::SYNCMODE_PARAM));
+	addParam(createParamCentered<CKSS>(mm2px(Vec(15.82, 99.574)), module, VCO_1::SWITCH_SIGNALTYPE_PARAM));
+	addParam(createParamCentered<CKSS>(mm2px(Vec(24.82, 99.574)), module, VCO_1::SWITCH_SYNCMODE_PARAM));
 
-	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(33.82, 13.0)), module, VCO_1::TUNEKNOB_PARAM));
-	addParam(createParamCentered<VCOFrequencyKnob>(mm2px(Vec(20.32, 23.0)), module, VCO_1::FREQKNOB_PARAM));
-	addParam(createParamCentered<VCOOctaveRotaryTumbler>(mm2px(Vec(20.32, 51.785)), module, VCO_1::OCTAVEKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnobWhiteLarge>(mm2px(Vec(20.32, 75.525)), module, VCO_1::PULSEWIDTHKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnob2WhiteTiny>(mm2px(Vec(6.82, 13.0)), module, VCO_1::FMKNOB_PARAM));
-	addParam(createParamCentered<AHMRoundKnob3WhiteTiny>(mm2px(Vec(6.82, 75.525)), module, VCO_1::PWMKNOB_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(33.82, 13.0)), module, VCO_1::KNOB_TUNE_PARAM));
+	addParam(createParamCentered<VCOFrequencyKnob>(mm2px(Vec(20.32, 23.0)), module, VCO_1::KNOB_FREQ_PARAM));
+	addParam(createParamCentered<VCOOctaveRotaryTumbler>(mm2px(Vec(20.32, 51.785)), module, VCO_1::KNOB_OCTAVE_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhiteLarge>(mm2px(Vec(20.32, 75.525)), module, VCO_1::KNOB_PULSEWIDTH_PARAM));
+	addParam(createParamCentered<AHMRoundKnob2WhiteTiny>(mm2px(Vec(6.82, 13.0)), module, VCO_1::KNOB_FM_PARAM));
+	addParam(createParamCentered<AHMRoundKnob3WhiteTiny>(mm2px(Vec(6.82, 75.525)), module, VCO_1::KNOB_PWM_PARAM));
 
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 51.785)), module, VCO_1::OCTAVEJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 33.0)), module, VCO_1::TUNEJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 103.574)), module, VCO_1::VOCTJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 33.0)), module, VCO_1::FMJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 75.525)), module, VCO_1::PWMJACK_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 103.574)), module, VCO_1::SYNCJACK_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 51.785)), module, VCO_1::JACK_OCTAVE_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 33.0)), module, VCO_1::JACK_TUNE_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 103.574)), module, VCO_1::JACK_VOCT_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 33.0)), module, VCO_1::JACK_FM_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 75.525)), module, VCO_1::JACK_PWM_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 103.574)), module, VCO_1::JACK_SYNC_INPUT));
 
-	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(6.82, 112.573)), module, VCO_1::SINEWAVEJACK_OUTPUT));
-	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.82, 112.573)), module, VCO_1::TRIANGLEWAVEJACK_OUTPUT));
-	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(24.82, 112.573)), module, VCO_1::SAWWAVEJACK_OUTPUT));
-	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.82, 112.573)), module, VCO_1::SQUAREWAVEJACK_OUTPUT));
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(6.82, 112.573)), module, VCO_1::JACK_SINEWAVE_OUTPUT));
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.82, 112.573)), module, VCO_1::JACK_TRIANGLEWAVE_OUTPUT));
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(24.82, 112.573)), module, VCO_1::JACK_SAWWAVE_OUTPUT));
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.82, 112.573)), module, VCO_1::JACK_SQUAREWAVE_OUTPUT));
 
-	addChild(createLightCentered<SmallLight<GreenLight>>(mm2px(Vec(2.32, 108.073)), module, VCO_1::BLINK_LIGHT));
+	addChild(createLightCentered<SmallLight<GreenLight>>(mm2px(Vec(2.32, 108.073)), module, VCO_1::LED_BLINK_LIGHT));
 }
 
 Model* modelVCO_1 = createModel<VCO_1, VCO_1Widget>("VCO-1");
