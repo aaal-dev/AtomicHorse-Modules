@@ -60,7 +60,7 @@ struct VCO_1 : Module {
 	simd::float_4 sinewave(simd::float_4 phase);
 	simd::float_4 trianglewave(simd::float_4 phase);
 	simd::float_4 sawwave(simd::float_4 phase);
-	simd::float_4 squarewave(simd::float_4 phase, float pwParamValue);
+	simd::float_4 squarewave(simd::float_4 phase, simd::float_4 pwParamValue);
 
 	void process(const ProcessArgs& args) override;
 };

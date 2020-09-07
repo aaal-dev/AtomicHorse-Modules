@@ -8,7 +8,7 @@ void init(Plugin* p) {
 	pluginInstance = p;
 	p->addModel(modelVCO_1);
 	p->addModel(modelEnvelope_1);
-	p->addModel(modelSmallEnvelope_1);
+	p->addModel(modelADSR);
 	p->addModel(modelLFO_1);
 	p->addModel(modelMixer_1);
 

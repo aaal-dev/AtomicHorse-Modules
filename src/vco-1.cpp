@@ -62,67 +62,65 @@ simd::float_4 VCO_1::sawwave(simd::float_4 phase) {
 	return sawwave;
 }
 
-simd::float_4 VCO_1::squarewave(simd::float_4 phase, float pwParamValue) {
+simd::float_4 VCO_1::squarewave(simd::float_4 phase, simd::float_4 pwParamValue) {
 	return simd::ifelse(phase < pwParamValue, 1.f, -1.f);
 }
 
 void VCO_1::process(const ProcessArgs& args) {
-	// Freguency parameter
-	float freq_param = params[KNOB_FREQ_PARAM].getValue();
-	if (inputs[JACK_FM_INPUT].isConnected()) {
-		float fm_signal = inputs[JACK_FM_INPUT].getVoltage();
-		float fm_param  = params[KNOB_FM_PARAM].getValue();
-		freq_param += fm_signal * fm_param;
-	}
-
-	// Fine tune parameter
-	float tune_param = dsp::quadraticBipolar(params[KNOB_TUNE_PARAM].getValue());
-	if (inputs[JACK_TUNE_INPUT].isConnected()) {
-		float tune_signal = inputs[JACK_TUNE_INPUT].getVoltage();
-		tune_param += tune_signal / 12.f;
-	}
-	freq_param += tune_param;
-
-	// Octave parameter
-	float octave_param = params[KNOB_OCTAVE_PARAM].getValue();
-	if (inputs[JACK_OCTAVE_INPUT].isConnected()) {
-		float octave_signal = inputs[JACK_OCTAVE_INPUT].getVoltage();
-		octave_signal = rescale(octave_signal, -3.f, 2.f, -3.f, 2.f);
-		octave_param += octave_signal;
-		octave_param = clamp(octave_param, -3.f, 2.f);
-	}
-	freq_param += (int)octave_param;
-
-	// Pulse width parameter
-	float pulsewidth_param = params[KNOB_PULSEWIDTH_PARAM].getValue();
-	if (inputs[JACK_PWM_INPUT].isConnected()) {
-		float pwm_signal = inputs[JACK_PWM_INPUT].getVoltage() / 10.f;
-		float pwm_param = params[KNOB_PWM_PARAM].getValue();
-		pwm_signal = rescale(pwm_signal, 0.f, 1.f, 0.f, 1.f);
-		pulsewidth_param += pwm_signal * pwm_param;
-	}
-	pulsewidth_param = clamp(pulsewidth_param, .01f, .99f);
-
-	// Analog or digital signal parameter
-	analogsignal = params[SWITCH_SIGNALTYPE_PARAM].getValue() > 0.f;
-
-
-
-
+	// Number of poly voices
 	int voices = std::max(inputs[JACK_VOCT_INPUT].getChannels(), 1);
 	outputs[JACK_SINEWAVE_OUTPUT].setChannels(voices);
 	outputs[JACK_TRIANGLEWAVE_OUTPUT].setChannels(voices);
 	outputs[JACK_SAWWAVE_OUTPUT].setChannels(voices);
 	outputs[JACK_SQUAREWAVE_OUTPUT].setChannels(voices);
 
+	// Analog or digital signal parameter
+	analogsignal = params[SWITCH_SIGNALTYPE_PARAM].getValue() > 0.f;
+
 	for (int voice = 0; voice < voices; voice += 4) {
-		simd::float_4 freq_value = freq_param;
-		if (inputs[JACK_VOCT_INPUT].isConnected()) {
-			simd::float_4 voct_signal = inputs[JACK_VOCT_INPUT].getVoltageSimd<simd::float_4>(voice);
-			freq_value += voct_signal;
+
+		// Freguency parameter
+		simd::float_4 freq_param = params[KNOB_FREQ_PARAM].getValue();
+		if (inputs[JACK_FM_INPUT].isConnected()) {
+			simd::float_4 fm_signal = inputs[JACK_FM_INPUT].getVoltageSimd<simd::float_4>(voice);
+			simd::float_4 fm_param  = params[KNOB_FM_PARAM].getValue();
+			freq_param += fm_signal * fm_param;
 		}
 
-		simd::float_4 frequency = dsp::FREQ_C4 * dsp::approxExp2_taylor5(freq_value + 30) / 1073741824;
+		// Fine tune parameter
+		simd::float_4 tune_param = dsp::quadraticBipolar(params[KNOB_TUNE_PARAM].getValue());
+		if (inputs[JACK_TUNE_INPUT].isConnected()) {
+			simd::float_4 tune_signal = inputs[JACK_TUNE_INPUT].getVoltageSimd<simd::float_4>(voice);
+			tune_param += tune_signal / 12.f;
+		}
+		freq_param += tune_param;
+
+		// Octave parameter
+		float octave_param = params[KNOB_OCTAVE_PARAM].getValue();
+		if (inputs[JACK_OCTAVE_INPUT].isConnected()) {
+			float octave_signal = inputs[JACK_OCTAVE_INPUT].getVoltage();
+			octave_signal = rescale(octave_signal, -3.f, 2.f, -3.f, 2.f);
+			octave_param += octave_signal;
+			octave_param = clamp(octave_param, -3.f, 2.f);
+		}
+		freq_param += (int)octave_param;
+
+		// Pulse width parameter
+		simd::float_4 pulsewidth_param = params[KNOB_PULSEWIDTH_PARAM].getValue();
+		if (inputs[JACK_PWM_INPUT].isConnected()) {
+			simd::float_4 pwm_signal = inputs[JACK_PWM_INPUT].getVoltageSimd<simd::float_4>(voice) / 10.f;
+			simd::float_4 pwm_param = params[KNOB_PWM_PARAM].getValue();
+			pwm_signal = rescale(pwm_signal, 0.f, 1.f, 0.f, 1.f);
+			pulsewidth_param += pwm_signal * pwm_param;
+		}
+		pulsewidth_param = clamp(pulsewidth_param, .01f, .99f);
+
+		if (inputs[JACK_VOCT_INPUT].isConnected()) {
+			simd::float_4 voct_signal = inputs[JACK_VOCT_INPUT].getVoltageSimd<simd::float_4>(voice);
+			freq_param += voct_signal;
+		}
+
+		simd::float_4 frequency = dsp::FREQ_C4 * dsp::approxExp2_taylor5(freq_param + 30) / 1073741824;
 		simd::float_4 delta_phase = clamp(frequency * args.sampleTime, 1e-6f, 0.35f);
 		phase[voice] += delta_phase;
 		phase[voice] -= simd::floor(phase[voice]);
