@@ -57,6 +57,15 @@
         "Mixer",
         "Polyphonic"
       ]
+    },
+{
+      "slug": "2m-mix-s",
+      "name": "2 Mono to Stereo",
+      "description": "Mono to stereo signal muxer",
+      "tags": [
+        "Mixer",
+        "Polyphonic"
+      ]
     }
   ]
 }
