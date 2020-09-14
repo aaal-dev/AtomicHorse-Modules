@@ -6,9 +6,11 @@ I use some free fonts from [FontSpace](https://www.fontspace.com/commercial-font
 
 \- [Big Noodle Titling Font](https://www.fontspace.com/big-noodle-titling-font-f35093) by [Sentinel Type](https://www.fontspace.com/sentinel-type) in VCO-1, Envelope-1, LFO-1, Mixer-1
 
-[ADSR](#adsr) | [Envelope-1](#envelope-1) | [LFO-1](#lfo-1) | [Mixer-1](#mixer-1) | VCF | [VCO-1](#vco-1)
-|---|---|---|---|---|---|
-| ![ADSR](/pics/adsr.png) | ![Envelope-1](/pics/envelope-1.png "Third version of visual design") | ![LFO-1](/pics/lfo-1.png "Second version of visual design") | ![Mixer-1](/pics/mixer-1.png "First version of visual design") | Not done yet | ![VCO-1](/pics/vco-1.png "Third version of visual design") |
+I can confirm that is ADSR and 2Mto1S working fine for now as I expected. Other modules have some issues. Mixer-1 the most problematic. 
+
+[ADSR](#adsr) | [Envelope-1](#envelope-1) | [LFO-1](#lfo-1) | [Mixer-1](#mixer-1) | [2Mto1S](#2Mto1S) | VCF | [VCO-1](#vco-1)
+|---|---|---|---|---|---|---|
+| ![ADSR](/pics/adsr.png) | ![Envelope-1](/pics/envelope-1.png "Third version of visual design") | ![LFO-1](/pics/lfo-1.png "Second version of visual design") | ![Mixer-1](/pics/mixer-1.png "First version of visual design") | ![2Mto1S](/pics/mixer-2m-1s.png "First version of visual design") | Not done yet | ![VCO-1](/pics/vco-1.png "Third version of visual design") |
 
 ## VCO-1
 
