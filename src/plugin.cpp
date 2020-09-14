@@ -6,12 +6,12 @@ Plugin* pluginInstance;
 
 void init(Plugin* p) {
 	pluginInstance = p;
-	p->addModel(modelVCO_1);
-	p->addModel(modelEnvelope_1);
-	p->addModel(modelADSR);
-	p->addModel(modelLFO_1);
-	p->addModel(modelMixer_1);
-	p->addModel(modelM2_MIX_S);
+	p->addModel(model_VCO_1);
+	p->addModel(model_Envelope_1);
+	p->addModel(model_ADSR);
+	p->addModel(model_LFO_1);
+	p->addModel(model_Mixer_1);
+	p->addModel(model_Mixer2m1s);
 
 	// Any other plugin initialization may go here.
 	// As an alternative, consider lazy-loading assets and lookup tables 

@@ -7,12 +7,12 @@ using namespace rack;
 extern Plugin* pluginInstance;
 
 // Declare each Model, defined in each module source file
-extern Model* modelVCO_1;
-extern Model* modelEnvelope_1;
-extern Model* modelADSR;
-extern Model* modelLFO_1;
-extern Model* modelMixer_1;
-extern Model* modelM2_MIX_S;
+extern Model* model_VCO_1;
+extern Model* model_Envelope_1;
+extern Model* model_ADSR;
+extern Model* model_LFO_1;
+extern Model* model_Mixer_1;
+extern Model* model_Mixer2m1s;
 
 // Knobs
 

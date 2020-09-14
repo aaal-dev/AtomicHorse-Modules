@@ -1,6 +1,6 @@
 #include "adsr.hpp"
 
-Model* modelADSR = createModel<ADSR, ADSRWidget>("ADSR");
+Model* model_ADSR = createModel<ADSR, ADSRWidget>("ADSR");
 
 ADSR::ADSR() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);

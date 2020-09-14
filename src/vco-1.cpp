@@ -1,5 +1,7 @@
 #include "vco-1.hpp"
 
+Model* model_VCO_1 = createModel<VCO_1, VCO_1Widget>("VCO-1");
+
 VCO_1::VCO_1() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	configParam<VCOFreqKnobParamQuantity>(KNOB_FREQ_PARAM, -6.0f, 6.0f, 0.0f, "Frequency", " Hz");
@@ -10,6 +12,40 @@ VCO_1::VCO_1() {
 	configParam(KNOB_PWM_PARAM, 0.f, 1.f, 0.f, "Pulse width modulation depth", "%", 0.f, 100.f);
 	configParam(SWITCH_SIGNALTYPE_PARAM, 0.f, 1.f, 1.f, "Analog or digital signal type");
 	configParam(SWITCH_SYNCMODE_PARAM, 0.f, 1.f, 1.f, "Hard or soft sync mode");
+}
+
+VCO_1Widget::VCO_1Widget(VCO_1* module) {
+	setModule(module);
+	setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/panels/VCO-1.svg")));
+
+	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+
+	addParam(createParamCentered<CKSS>(mm2px(Vec(15.82, 99.574)), module, VCO_1::SWITCH_SIGNALTYPE_PARAM));
+	addParam(createParamCentered<CKSS>(mm2px(Vec(24.82, 99.574)), module, VCO_1::SWITCH_SYNCMODE_PARAM));
+
+	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(33.82, 13.0)), module, VCO_1::KNOB_TUNE_PARAM));
+	addParam(createParamCentered<VCOFrequencyKnob>(mm2px(Vec(20.32, 23.0)), module, VCO_1::KNOB_FREQ_PARAM));
+	addParam(createParamCentered<VCOOctaveRotaryTumbler>(mm2px(Vec(20.32, 51.785)), module, VCO_1::KNOB_OCTAVE_PARAM));
+	addParam(createParamCentered<AHMRoundKnobWhiteLarge>(mm2px(Vec(20.32, 75.525)), module, VCO_1::KNOB_PULSEWIDTH_PARAM));
+	addParam(createParamCentered<AHMRoundKnob2WhiteTiny>(mm2px(Vec(6.82, 13.0)), module, VCO_1::KNOB_FM_PARAM));
+	addParam(createParamCentered<AHMRoundKnob3WhiteTiny>(mm2px(Vec(6.82, 75.525)), module, VCO_1::KNOB_PWM_PARAM));
+
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 51.785)), module, VCO_1::JACK_OCTAVE_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 33.0)), module, VCO_1::JACK_TUNE_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 103.574)), module, VCO_1::JACK_VOCT_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 33.0)), module, VCO_1::JACK_FM_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 75.525)), module, VCO_1::JACK_PWM_INPUT));
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 103.574)), module, VCO_1::JACK_SYNC_INPUT));
+
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(6.82, 112.573)), module, VCO_1::JACK_SINEWAVE_OUTPUT));
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.82, 112.573)), module, VCO_1::JACK_TRIANGLEWAVE_OUTPUT));
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(24.82, 112.573)), module, VCO_1::JACK_SAWWAVE_OUTPUT));
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.82, 112.573)), module, VCO_1::JACK_SQUAREWAVE_OUTPUT));
+
+	addChild(createLightCentered<SmallLight<GreenLight>>(mm2px(Vec(2.32, 108.073)), module, VCO_1::LED_BLINK_LIGHT));
 }
 
 simd::float_4 VCO_1::sin2pi_pade_05_5_4(simd::float_4 x) {
@@ -234,42 +270,6 @@ void VCO_1::process(const ProcessArgs& args) {
 	}
 }
 
-
-VCO_1Widget::VCO_1Widget(VCO_1* module) {
-	setModule(module);
-	setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/panels/VCO-1.svg")));
-
-	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-
-	addParam(createParamCentered<CKSS>(mm2px(Vec(15.82, 99.574)), module, VCO_1::SWITCH_SIGNALTYPE_PARAM));
-	addParam(createParamCentered<CKSS>(mm2px(Vec(24.82, 99.574)), module, VCO_1::SWITCH_SYNCMODE_PARAM));
-
-	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(33.82, 13.0)), module, VCO_1::KNOB_TUNE_PARAM));
-	addParam(createParamCentered<VCOFrequencyKnob>(mm2px(Vec(20.32, 23.0)), module, VCO_1::KNOB_FREQ_PARAM));
-	addParam(createParamCentered<VCOOctaveRotaryTumbler>(mm2px(Vec(20.32, 51.785)), module, VCO_1::KNOB_OCTAVE_PARAM));
-	addParam(createParamCentered<AHMRoundKnobWhiteLarge>(mm2px(Vec(20.32, 75.525)), module, VCO_1::KNOB_PULSEWIDTH_PARAM));
-	addParam(createParamCentered<AHMRoundKnob2WhiteTiny>(mm2px(Vec(6.82, 13.0)), module, VCO_1::KNOB_FM_PARAM));
-	addParam(createParamCentered<AHMRoundKnob3WhiteTiny>(mm2px(Vec(6.82, 75.525)), module, VCO_1::KNOB_PWM_PARAM));
-
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 51.785)), module, VCO_1::JACK_OCTAVE_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 33.0)), module, VCO_1::JACK_TUNE_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 103.574)), module, VCO_1::JACK_VOCT_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 33.0)), module, VCO_1::JACK_FM_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 75.525)), module, VCO_1::JACK_PWM_INPUT));
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.82, 103.574)), module, VCO_1::JACK_SYNC_INPUT));
-
-	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(6.82, 112.573)), module, VCO_1::JACK_SINEWAVE_OUTPUT));
-	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.82, 112.573)), module, VCO_1::JACK_TRIANGLEWAVE_OUTPUT));
-	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(24.82, 112.573)), module, VCO_1::JACK_SAWWAVE_OUTPUT));
-	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.82, 112.573)), module, VCO_1::JACK_SQUAREWAVE_OUTPUT));
-
-	addChild(createLightCentered<SmallLight<GreenLight>>(mm2px(Vec(2.32, 108.073)), module, VCO_1::LED_BLINK_LIGHT));
-}
-
-Model* modelVCO_1 = createModel<VCO_1, VCO_1Widget>("VCO-1");
 
 float VCOFreqKnobParamQuantity::offset() {
 	return 0.0f;

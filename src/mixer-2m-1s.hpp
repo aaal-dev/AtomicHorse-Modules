@@ -1,19 +1,22 @@
 #include "plugin.hpp"
 
-#define TRACKS_NUMBER 2
-
-struct M2_MIX_S : Module {
+struct Mixer2m1s : Module {
 	enum ParamIds {
-		ENUMS(FADER_LEVEL_PARAM, TRACKS_NUMBER),
-		ENUMS(KNOB_PAN_PARAM, TRACKS_NUMBER),
+		FADER_LEVEL_L_PARAM,
+		FADER_LEVEL_R_PARAM,
+		KNOB_PAN_L_PARAM,
+		KNOB_PAN_R_PARAM,
 		KNOB_MAINCV_PARAM,
 		KNOB_MAINLEVEL_PARAM,
 		NUM_PARAMS
 	};
 	enum InputIds {
-		ENUMS(JACK_IN_INPUT, TRACKS_NUMBER), 
-		ENUMS(JACK_CV_INPUT, TRACKS_NUMBER), 
-		ENUMS(JACK_PAN_INPUT, TRACKS_NUMBER), 
+		JACK_IN_L_INPUT,
+		JACK_IN_R_INPUT,
+		JACK_CV_L_INPUT,
+		JACK_CV_R_INPUT,
+		JACK_PAN_L_INPUT,
+		JACK_PAN_R_INPUT,
 		JACK_MAINCV_INPUT, 
 		NUM_INPUTS
 	};
@@ -23,10 +26,8 @@ struct M2_MIX_S : Module {
 		NUM_OUTPUTS
 	};
 	enum LightIds {
-		LED_LEVEL1_LIGHT,
-		LED_LEVEL2_LIGHT,
-		LED_LEVEL3_LIGHT,
-		LED_LEVEL4_LIGHT,
+		LED_LEVEL_L_LIGHT,
+		LED_LEVEL_R_LIGHT,
 		LED_LEVELMAIN_LIGHT,
 		NUM_LIGHTS
 	};
@@ -34,7 +35,7 @@ struct M2_MIX_S : Module {
 	float main_l_value[16] = {};
 	float main_r_value[16] = {};
 	
-	M2_MIX_S();
+	Mixer2m1s();
 	
 	void process(const ProcessArgs& args) override;
 	
@@ -47,8 +48,8 @@ struct M2_MIX_S : Module {
 	};
 };
 
-struct M2_MIX_S_Widget : ModuleWidget {
-	M2_MIX_S_Widget(M2_MIX_S* module);
+struct Mixer2m1s_Widget : ModuleWidget {
+	Mixer2m1s_Widget(Mixer2m1s* module);
 };
 
 

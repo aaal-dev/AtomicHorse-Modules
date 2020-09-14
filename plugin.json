@@ -59,9 +59,9 @@
       ]
     },
 {
-      "slug": "2m-mix-s",
-      "name": "2 Mono to Stereo",
-      "description": "Mono to stereo signal muxer",
+      "slug": "Mixer-2m-1s",
+      "name": "2 Mono to Stereo mixer",
+      "description": "Mono to stereo signal mixer",
       "tags": [
         "Mixer",
         "Polyphonic"

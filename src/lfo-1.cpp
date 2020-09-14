@@ -1,5 +1,7 @@
 #include "lfo-1.hpp"
 
+Model* model_LFO_1 = createModel<LFO_1, LFO_1Widget>("LFO-1");
+
 LFO_1::LFO_1 () {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 	configParam<LFOFrequencyParamQuantity>(KNOB_FREQUENCY_PARAM, 0.f, 10.f, 0.f, "Frequency", " Hz");
@@ -81,7 +83,7 @@ LFO_1Widget::LFO_1Widget(LFO_1* module) {
 
 }
 
-Model* modelLFO_1 = createModel<LFO_1, LFO_1Widget>("LFO-1");
+
 
 
 // Additional stuff

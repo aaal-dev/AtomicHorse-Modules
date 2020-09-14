@@ -1,6 +1,6 @@
 #include "envelope-1.hpp"
 
-Model* modelEnvelope_1 = createModel<Envelope_1, Envelope_1Widget>("Envelope-1");
+Model* model_Envelope_1 = createModel<Envelope_1, Envelope_1Widget>("Envelope-1");
 
 Envelope_1::Envelope_1() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);

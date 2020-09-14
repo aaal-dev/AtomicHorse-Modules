@@ -1,5 +1,6 @@
 #include "mixer-1.hpp"
 
+Model* model_Mixer_1 = createModel<Mixer_1, Mixer_1Widget>("Mixer-1");
 
 Mixer_1::Mixer_1() {
 	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
@@ -8,6 +9,35 @@ Mixer_1::Mixer_1() {
 		configParam(KNOB_PAN_PARAM + i, -1.f, 1.f, 0.f, "Panning of signal " + std::to_string(i + 1), "%", 0.f, 100.f);
 	}
 	configParam(KNOB_MAINLEVEL_PARAM, 0.f, M_SQRT2, 1.f, "Level of mixed signal", "%", 0.f, 100.f);
+}
+
+Mixer_1Widget::Mixer_1Widget(Mixer_1* module) {
+	setModule(module);
+	setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/panels/mixer-1.svg")));
+
+	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+
+	//MixerVuMeter* vuMeter1L = createWidget<MixerVuMeter>(mm2px(Vec(3.0, 29.464)));
+	//vuMeter1L->module = module;
+	//addChild(vuMeter1L);
+
+	for (int i = 0; i < TRACKS_NUMBER; i++) {
+		addParam(createParamCentered<MixerLevel>(mm2px(Vec(6.82 + 9 * i, 46.464)), module, Mixer_1::FADER_LEVEL_PARAM + i));
+		addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(6.82 + 9 * i, 85.312)), module, Mixer_1::KNOB_PAN_PARAM + i));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * i, 13.0)), module, Mixer_1::JACK_IN_L_INPUT + i));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * i, 22.0)), module, Mixer_1::JACK_IN_R_INPUT + i));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * i, 70.31)), module, Mixer_1::JACK_CV_INPUT + i));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * i, 93.63)), module, Mixer_1::JACK_PAN_INPUT + i));
+	}
+
+	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 115.566)), module, Mixer_1::JACK_MAINCV_INPUT));
+	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(6.820, 106.566)), module, Mixer_1::KNOB_MAINCV_PARAM));
+	addParam(createParamCentered<MixerMainLevelKnob>(mm2px(Vec(20.32, 111.093)), module, Mixer_1::KNOB_MAINLEVEL_PARAM));
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.82, 106.566)), module, Mixer_1::JACK_MAIN_L_OUTPUT));
+	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.82, 115.566)), module, Mixer_1::JACK_MAIN_R_OUTPUT));
 }
 
 void Mixer_1::process(const ProcessArgs& args) {
@@ -82,36 +112,7 @@ void Mixer_1::process(const ProcessArgs& args) {
 
 }
 
-Mixer_1Widget::Mixer_1Widget(Mixer_1* module) {
-	setModule(module);
-	setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/panels/mixer-1.svg")));
 
-	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-	addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-	addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-
-	//MixerVuMeter* vuMeter1L = createWidget<MixerVuMeter>(mm2px(Vec(3.0, 29.464)));
-	//vuMeter1L->module = module;
-	//addChild(vuMeter1L);
-
-	for (int i = 0; i < TRACKS_NUMBER; i++) {
-		addParam(createParamCentered<MixerLevel>(mm2px(Vec(6.82 + 9 * i, 46.464)), module, Mixer_1::FADER_LEVEL_PARAM + i));
-		addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(6.82 + 9 * i, 85.312)), module, Mixer_1::KNOB_PAN_PARAM + i));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * i, 13.0)), module, Mixer_1::JACK_IN_L_INPUT + i));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * i, 22.0)), module, Mixer_1::JACK_IN_R_INPUT + i));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * i, 70.31)), module, Mixer_1::JACK_CV_INPUT + i));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * i, 93.63)), module, Mixer_1::JACK_PAN_INPUT + i));
-	}
-
-	addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82, 115.566)), module, Mixer_1::JACK_MAINCV_INPUT));
-	addParam(createParamCentered<AHMRoundKnobWhiteTiny>(mm2px(Vec(6.820, 106.566)), module, Mixer_1::KNOB_MAINCV_PARAM));
-	addParam(createParamCentered<MixerMainLevelKnob>(mm2px(Vec(20.32, 111.093)), module, Mixer_1::KNOB_MAINLEVEL_PARAM));
-	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.82, 106.566)), module, Mixer_1::JACK_MAIN_L_OUTPUT));
-	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.82, 115.566)), module, Mixer_1::JACK_MAIN_R_OUTPUT));
-}
-
-Model* modelMixer_1 = createModel<Mixer_1, Mixer_1Widget>("Mixer-1");
 
 MixerMainLevelKnob::MixerMainLevelKnob() {
 	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/Mixer_MaimLevelKnob.svg")));
