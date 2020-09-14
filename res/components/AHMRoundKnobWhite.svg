@@ -8,7 +8,7 @@
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    sodipodi:docname="AHMRoundKnobWhite.svg"
-   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
    id="svg111794"
    version="1.1"
    viewBox="0 0 10 10"
@@ -24,10 +24,10 @@
      inkscape:object-paths="true"
      inkscape:document-rotation="0"
      inkscape:window-maximized="1"
-     inkscape:window-y="34"
-     inkscape:window-x="0"
-     inkscape:window-height="1018"
-     inkscape:window-width="1920"
+     inkscape:window-y="0"
+     inkscape:window-x="42"
+     inkscape:window-height="1052"
+     inkscape:window-width="2518"
      fit-margin-bottom="0"
      fit-margin-right="0"
      fit-margin-left="0"
@@ -35,9 +35,9 @@
      showgrid="false"
      inkscape:current-layer="layer1"
      inkscape:document-units="mm"
-     inkscape:cy="13.305033"
-     inkscape:cx="0.31430063"
-     inkscape:zoom="11.2"
+     inkscape:cy="8.2954291"
+     inkscape:cx="19.22519"
+     inkscape:zoom="7.919596"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
@@ -116,6 +116,10 @@
        inkscape:label=""
        inkscape:locked="false"
        inkscape:color="rgb(0,0,255)" />
+    <sodipodi:guide
+       position="5.0000014,4.9999984"
+       orientation="1,0"
+       id="guide845" />
   </sodipodi:namedview>
   <metadata
      id="metadata111791">
@@ -135,23 +139,19 @@
      inkscape:groupmode="layer"
      inkscape:label="Layer 1">
     <path
-       id="path110586"
-       d="m 108.20944,82.425957 c 0,2.76182 -2.23889,5 -4.99999,5 -2.76183,0 -5.000011,-2.23818 -5.000011,-5 0,-2.7611 2.238181,-5.000001 5.000011,-5.000001 2.7611,0 4.99999,2.238901 4.99999,5.000001"
-       style="fill:#e3e2db;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.185669"
-       inkscape:connector-curvature="0" />
-    <path
-       style="fill:none;stroke:#1a1a1a;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 103.20945,77.425956 v 1.23868"
-       id="path854" />
-    <path
        inkscape:connector-curvature="0"
-       style="fill:#1a1a1a;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.148535"
-       d="m 107.20944,82.425957 c 0,2.20946 -1.7911,4 -3.99999,4 -2.20946,0 -4.000011,-1.79054 -4.000011,-4 0,-2.20888 1.790551,-4.000001 4.000011,-4.000001 2.20889,0 3.99999,1.791121 3.99999,4.000001"
+       style="fill:#1a1a1a;fill-opacity:1;fill-rule:nonzero;stroke:#e3e2db;stroke-width:0.985915;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 107.71648,82.425955 c 0,2.489533 -2.01814,4.507042 -4.50703,4.507042 -2.48954,0 -4.507054,-2.017509 -4.507054,-4.507042 0,-2.488879 2.017514,-4.507042 4.507054,-4.507042 2.48889,0 4.50703,2.018163 4.50703,4.507042"
        id="path838" />
     <path
+       style="fill:none;stroke:#1a1a1a;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 103.20945,77.425956 -1e-5,0.992482"
+       id="path854"
+       sodipodi:nodetypes="cc" />
+    <path
        id="path840"
-       d="m 103.20945,78.425955 v 1.056402"
-       style="fill:none;stroke:#e3e2db;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 103.20944,78.418438 1e-5,1.551253"
+       style="fill:none;stroke:#e3e2db;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        sodipodi:nodetypes="cc" />
   </g>
 </svg>

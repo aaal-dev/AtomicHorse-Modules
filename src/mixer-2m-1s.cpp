@@ -13,7 +13,7 @@ Mixer2m1s::Mixer2m1s() {
 
 Mixer2m1s_Widget::Mixer2m1s_Widget(Mixer2m1s* module) {
 	setModule(module);
-	setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/panels/2m-mix-s.svg")));
+	setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/panels/mixer-2m-1s.svg")));
 
 	addChild(createWidget<ScrewSilver>(Vec(box.size.x - RACK_GRID_WIDTH, 0)));
 	addChild(createWidget<ScrewSilver>(Vec(0, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
@@ -68,8 +68,10 @@ void Mixer2m1s::process(const ProcessArgs& args) {
 		if (pan_l < 0.f) {
 			pan_l = 0.f - pan_l;
 			pan_level_lr = pan_l;
+			pan_level_rr -= pan_l;
 		} else if (pan_l > 0.f) {
 			pan_level_ll = pan_l;
+			pan_level_rl -= pan_l;
 		}
 	}
 
@@ -80,8 +82,10 @@ void Mixer2m1s::process(const ProcessArgs& args) {
 		if (pan_r < 0.f) {
 			pan_r = 0.f - pan_r;
 			pan_level_rr = pan_r;
+			pan_level_lr -= pan_r;
 		} else if (pan_r > 0.f) {
 			pan_level_rl = pan_r;
+			pan_level_ll -= pan_r;
 		}
 	}
 
@@ -129,7 +133,7 @@ void Mixer2m1s::process(const ProcessArgs& args) {
 
 
 Mixer2m1s::MixerMainLevelKnob::MixerMainLevelKnob() {
-	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/Mixer_MaimLevelKnob.svg")));
+	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/Mixer_MainLevelKnob.svg")));
 	shadow->box.pos = Vec(0.0, 2.5);
 	minAngle = -0.5 * M_PI;
 	maxAngle = 0.941 * M_PI;

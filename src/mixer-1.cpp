@@ -115,7 +115,7 @@ void Mixer_1::process(const ProcessArgs& args) {
 
 
 MixerMainLevelKnob::MixerMainLevelKnob() {
-	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/Mixer_MaimLevelKnob.svg")));
+	setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/components/Mixer_MainLevelKnob.svg")));
 	shadow->box.pos = Vec(0.0, 2.5);
 	minAngle = -0.5 * M_PI;
 	maxAngle = 0.941 * M_PI;
