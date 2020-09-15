@@ -100,28 +100,28 @@ void Mixer2m1s::process(const ProcessArgs& args) {
 
 		// Left channel
 		if (outputs[JACK_MAIN_L_OUTPUT].isConnected()) {
-			input_level_l[voice] *= fader_level_l /  (fader_level_l + fader_level_r);
+			input_level_l[voice] *= fader_level_l;
 			if (inputs[JACK_CV_L_INPUT].isConnected())
 				input_level_l[voice] *= clamp(inputs[JACK_CV_L_INPUT].getPolyVoltage(voice) / 10.f, 0.f, 1.f);
 		}
 
 		// Right channel
 		if (outputs[JACK_MAIN_R_OUTPUT].isConnected()) {
-			input_level_r[voice] *= fader_level_r /  (fader_level_l + fader_level_r);
+			input_level_r[voice] *= fader_level_r;
 			if (inputs[JACK_CV_R_INPUT].isConnected())
 				input_level_r[voice] *= clamp(inputs[JACK_CV_R_INPUT].getPolyVoltage(voice) / 10.f, 0.f, 1.f);
 		}
 
-		output_level_ll[voice] = input_level_l[voice];// * pan_level_ll * pan_level_ll;
-		output_level_lr[voice] = input_level_l[voice];// * pan_level_lr * pan_level_lr;
+		output_level_ll[voice] = input_level_l[voice] * pan_level_ll;
+		output_level_lr[voice] = input_level_l[voice] * pan_level_lr;
 
-		output_level_rl[voice] = input_level_r[voice];// * pan_level_rl * pan_level_rl;
-		output_level_rr[voice] = input_level_r[voice];// * pan_level_rr * pan_level_rr;
+		output_level_rl[voice] = input_level_r[voice] * pan_level_rl;
+		output_level_rr[voice] = input_level_r[voice] * pan_level_rr;
 
-		main_l_value[voice] = input_level_l[voice] + input_level_l[voice];//output_level_ll[voice] + output_level_rl[voice];
+		main_l_value[voice] = (output_level_ll[voice] * (pan_level_ll + pan_level_rr) / 2.f) + (output_level_rl[voice] * (pan_level_lr + pan_level_rl) / 2.f);
 		main_l_value[voice] *= main_level_param;
 
-		main_r_value[voice] = input_level_r[voice] + input_level_r[voice];//output_level_lr[voice] + output_level_rr[voice];
+		main_r_value[voice] = (output_level_lr[voice] * (pan_level_lr + pan_level_rl) / 2.f) + (output_level_rr[voice] * (pan_level_ll + pan_level_rr) / 2.f);
 		main_r_value[voice] *= main_level_param;
 	}
 	outputs[JACK_MAIN_L_OUTPUT].setChannels(voices_needed);
