@@ -46,10 +46,10 @@ void Mixer2m1s::process(const ProcessArgs& args) {
 	float fader_level_r = std::pow(params[FADER_LEVEL_R_PARAM].getValue(), 2.f);
 	float pan_l = params[KNOB_PAN_L_PARAM].getValue();
 	float pan_r = params[KNOB_PAN_R_PARAM].getValue();
-	float pan_level_ll = 0.f;
-	float pan_level_lr = 0.f;
-	float pan_level_rl = 0.f;
-	float pan_level_rr = 0.f;
+	float pan_level_ll = 1.f;
+	float pan_level_lr = 1.f;
+	float pan_level_rl = 1.f;
+	float pan_level_rr = 1.f;
 
 	float input_level_l[16] = {0.f};
 	float input_level_r[16] = {0.f};
@@ -67,11 +67,11 @@ void Mixer2m1s::process(const ProcessArgs& args) {
 		inputs[JACK_IN_L_INPUT].readVoltages(input_level_l);
 		if (pan_l < 0.f) {
 			pan_l = 0.f - pan_l;
-			pan_level_lr = pan_l;
-			pan_level_rr -= pan_l;
+			pan_level_ll = 1.f;
+			pan_level_lr = 1.f - pan_l;
 		} else if (pan_l > 0.f) {
-			pan_level_ll = pan_l;
-			pan_level_rl -= pan_l;
+			pan_level_ll = 1.f - pan_l;
+			pan_level_lr = 1.f;
 		}
 	}
 
@@ -81,11 +81,13 @@ void Mixer2m1s::process(const ProcessArgs& args) {
 		inputs[JACK_IN_R_INPUT].readVoltages(input_level_r);
 		if (pan_r < 0.f) {
 			pan_r = 0.f - pan_r;
-			pan_level_rr = pan_r;
-			pan_level_lr -= pan_r;
+			pan_level_rl = 1.f;
+			pan_level_rr = 1.f - pan_r;
+			//pan_level_lr -= pan_r;
 		} else if (pan_r > 0.f) {
-			pan_level_rl = pan_r;
-			pan_level_ll -= pan_r;
+			pan_level_rl = 1.f - pan_r;
+			pan_level_rr = 1.f;
+			//pan_level_ll -= pan_r;
 		}
 	}
 
@@ -98,30 +100,29 @@ void Mixer2m1s::process(const ProcessArgs& args) {
 
 		// Left channel
 		if (outputs[JACK_MAIN_L_OUTPUT].isConnected()) {
-			input_level_l[voice] *= fader_level_l;
+			input_level_l[voice] *= fader_level_l /  (fader_level_l + fader_level_r);
 			if (inputs[JACK_CV_L_INPUT].isConnected())
 				input_level_l[voice] *= clamp(inputs[JACK_CV_L_INPUT].getPolyVoltage(voice) / 10.f, 0.f, 1.f);
-
 		}
 
 		// Right channel
 		if (outputs[JACK_MAIN_R_OUTPUT].isConnected()) {
-			input_level_r[voice] *= fader_level_r;
+			input_level_r[voice] *= fader_level_r /  (fader_level_l + fader_level_r);
 			if (inputs[JACK_CV_R_INPUT].isConnected())
 				input_level_r[voice] *= clamp(inputs[JACK_CV_R_INPUT].getPolyVoltage(voice) / 10.f, 0.f, 1.f);
 		}
 
-		output_level_ll[voice] = input_level_l[voice] * (1.f - pan_level_ll);
-		output_level_lr[voice] = input_level_l[voice] * (1.f - pan_level_lr);
+		output_level_ll[voice] = input_level_l[voice];// * pan_level_ll * pan_level_ll;
+		output_level_lr[voice] = input_level_l[voice];// * pan_level_lr * pan_level_lr;
 
-		output_level_rl[voice] = input_level_r[voice] * (1.f - pan_level_rl);
-		output_level_rr[voice] = input_level_r[voice] * (1.f - pan_level_rr);
+		output_level_rl[voice] = input_level_r[voice];// * pan_level_rl * pan_level_rl;
+		output_level_rr[voice] = input_level_r[voice];// * pan_level_rr * pan_level_rr;
 
-		main_l_value[voice] = (output_level_ll[voice] + output_level_rl[voice]) / (fader_level_l + fader_level_r);
-		main_l_value[voice] *= main_level_param * fader_level_l;
+		main_l_value[voice] = input_level_l[voice] + input_level_l[voice];//output_level_ll[voice] + output_level_rl[voice];
+		main_l_value[voice] *= main_level_param;
 
-		main_r_value[voice] = (output_level_lr[voice] + output_level_rr[voice]) / (fader_level_l + fader_level_r);
-		main_r_value[voice] *= main_level_param * fader_level_r;
+		main_r_value[voice] = input_level_r[voice] + input_level_r[voice];//output_level_lr[voice] + output_level_rr[voice];
+		main_r_value[voice] *= main_level_param;
 	}
 	outputs[JACK_MAIN_L_OUTPUT].setChannels(voices_needed);
 	outputs[JACK_MAIN_R_OUTPUT].setChannels(voices_needed);
