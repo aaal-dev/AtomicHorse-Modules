@@ -51,8 +51,17 @@
     },
 {
       "slug": "Mixer-4m-1m",
-      "name": "4 Momo to Mono mixer",
+      "name": "4 Mono to Mono mixer",
       "description": "Simple 4 mono signal mixer",
+      "tags": [
+        "Mixer",
+        "Polyphonic"
+      ]
+    },
+{
+      "slug": "Mixer-10m-1m",
+      "name": "10 Mono to Mono mixer",
+      "description": "Simple 10 mono signal mixer",
       "tags": [
         "Mixer",
         "Polyphonic"
