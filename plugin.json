@@ -50,9 +50,9 @@
       ]
     },
 {
-      "slug": "Mixer-1",
-      "name": "Mixer",
-      "description": "Simple 4 stereo/mono signal mixer",
+      "slug": "Mixer-4m-1m",
+      "name": "4 Momo to Mono mixer",
+      "description": "Simple 4 mono signal mixer",
       "tags": [
         "Mixer",
         "Polyphonic"

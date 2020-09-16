@@ -10,7 +10,7 @@ void init(Plugin* p) {
 	p->addModel(model_Envelope_1);
 	p->addModel(model_ADSR);
 	p->addModel(model_LFO_1);
-	p->addModel(model_Mixer_1);
+	p->addModel(model_Mixer4m1m);
 	p->addModel(model_Mixer2m1s);
 
 	// Any other plugin initialization may go here.

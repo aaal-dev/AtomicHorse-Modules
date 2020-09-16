@@ -1,4 +1,4 @@
-#include "mixer-1.hpp"
+#include "mixer-4s-1s.hpp"
 
 Model* model_Mixer_1 = createModel<Mixer_1, Mixer_1Widget>("Mixer-1");
 

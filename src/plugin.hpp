@@ -11,7 +11,7 @@ extern Model* model_VCO_1;
 extern Model* model_Envelope_1;
 extern Model* model_ADSR;
 extern Model* model_LFO_1;
-extern Model* model_Mixer_1;
+extern Model* model_Mixer4m1m;
 extern Model* model_Mixer2m1s;
 
 // Knobs

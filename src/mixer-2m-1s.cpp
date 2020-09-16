@@ -112,16 +112,16 @@ void Mixer2m1s::process(const ProcessArgs& args) {
 				input_level_r[voice] *= clamp(inputs[JACK_CV_R_INPUT].getPolyVoltage(voice) / 10.f, 0.f, 1.f);
 		}
 
-		output_level_ll[voice] = input_level_l[voice] * pan_level_ll;
-		output_level_lr[voice] = input_level_l[voice] * pan_level_lr;
+		output_level_ll[voice] = input_level_l[voice] * pan_level_ll / (1.f + pan_level_rl * fader_level_r);
+		output_level_lr[voice] = input_level_l[voice] * pan_level_lr / (1.f + pan_level_rr * fader_level_r);
 
-		output_level_rl[voice] = input_level_r[voice] * pan_level_rl;
-		output_level_rr[voice] = input_level_r[voice] * pan_level_rr;
+		output_level_rl[voice] = input_level_r[voice] * pan_level_rl / (1.f + pan_level_ll * fader_level_l);
+		output_level_rr[voice] = input_level_r[voice] * pan_level_rr / (1.f + pan_level_lr * fader_level_l);
 
-		main_l_value[voice] = (output_level_ll[voice] * (pan_level_ll + pan_level_rr) / 2.f) + (output_level_rl[voice] * (pan_level_lr + pan_level_rl) / 2.f);
+		main_l_value[voice] = output_level_ll[voice] + output_level_rl[voice];
 		main_l_value[voice] *= main_level_param;
 
-		main_r_value[voice] = (output_level_lr[voice] * (pan_level_lr + pan_level_rl) / 2.f) + (output_level_rr[voice] * (pan_level_ll + pan_level_rr) / 2.f);
+		main_r_value[voice] = output_level_lr[voice] + output_level_rr[voice];
 		main_r_value[voice] *= main_level_param;
 	}
 	outputs[JACK_MAIN_L_OUTPUT].setChannels(voices_needed);
