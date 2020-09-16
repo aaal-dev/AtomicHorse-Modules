@@ -56,7 +56,7 @@ I use rescale for knobs, I think it's might be helpful. Need some clamps in code
 
 | Status | Polyphony      | Wiki |
 | ---    | ---            | ---  |
-| Work   | Yes (w/o simd) |
+| Work   | Yes (w/o simd) | [Yes](https://github.com/animeslave/AtomicHorseModules/wiki/Envelopes:-ADSR) |
 
 Standart ADSR envelope generation. Simplified version of Envelope-1. Attack is linear. Decay and Release is logarythmical.
 
@@ -81,7 +81,7 @@ First take of standart 4 track mixer. I want stereo mixer with behaviors like in
 
 | Status | Polyphony      | Wiki |
 | ---    | ---            | ---  |
-| Work   | Yes (w/o simd) | [Yes]()
+| Work   | Yes (w/o simd) | [Yes](https://github.com/animeslave/AtomicHorseModules/wiki/Mixers:-2Mto1S) |
 
 Simple mixer of 2 mono signal to stereo with panning controls for each of two signals. 
 
