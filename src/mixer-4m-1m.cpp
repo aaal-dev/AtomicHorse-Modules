@@ -27,7 +27,7 @@ Mixer4m1m_Widget::Mixer4m1m_Widget(Mixer4m1m* module) {
 	addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(33.82, 18.0)), module, Mixer4m1m::JACK_MAIN_OUTPUT));
 
 	for (int track = 0; track < TRACKS_NUMBER; track++) {
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * track,  46.464)), module, Mixer4m1m::JACK_OUT_OUTPUT + track));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * track,  40.250)), module, Mixer4m1m::JACK_OUT_OUTPUT + track));
 		addParam(createParamCentered<Mixer4m1m::MixerLevel>(mm2px(Vec(6.82 + 9 * track, 76.630)), module, Mixer4m1m::FADER_LEVEL_PARAM + track));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * track, 106.566)), module, Mixer4m1m::JACK_CV_INPUT + track));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(6.82 + 9 * track, 115.061)), module, Mixer4m1m::JACK_IN_INPUT + track));
